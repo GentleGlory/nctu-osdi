@@ -57,6 +57,13 @@ add_custom_target(run
     COMMENT "Running kernel8.img in QEMU"
 )
 
+# Copy GDB script to build directory (always check for updates)
+add_custom_target(copy_gdb_script ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/scripts/run_gdb.sh ${CMAKE_BINARY_DIR}/run_gdb.sh
+    COMMENT "Copying GDB script to build directory"
+    VERBATIM
+)
+
 # Custom target for QEMU debug mode
 add_custom_target(qemu_debug
     COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -S -s
