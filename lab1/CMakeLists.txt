@@ -27,7 +27,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -nostartfiles")
 enable_language(C ASM)
 
 # Find all source files
-file(GLOB C_SOURCES "kernel/*.c")
+file(GLOB C_SOURCES "kernel/*.c" "drivers/*.c")
 file(GLOB ASM_SOURCES "kernel/*.S")
 
 # Create kernel8 executable
