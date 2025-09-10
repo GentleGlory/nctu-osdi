@@ -3,7 +3,7 @@
 
 void mini_uart_init()
 {
-	u32 val;
+	uint32_t val;
 
 	//Set GPIO14 and GPIO15 with alt function 5 and pull none
 	gpio_pin_sel_fn(14, GPF_FUNC_5);
@@ -40,7 +40,7 @@ void mini_uart_init()
 char mini_uart_getc()
 {
 	char c;
-	u32 val;
+	uint32_t val;
 	do {
 		val = readl(AUX_MU_LSR_REG);
 		asm volatile("nop");
@@ -53,7 +53,7 @@ char mini_uart_getc()
 
 void mini_uart_putc(unsigned char c)
 {
-	u32 val;
+	uint32_t val;
 	do {
 		val = readl(AUX_MU_LSR_REG);
 		asm volatile("nop");

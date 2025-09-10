@@ -3,7 +3,7 @@
 
 void gpio_pin_sel_fn(int pin, enum GPF_FUNC func)
 {
-	u32 base, val;
+	uint32_t base, val;
 
 	base = GPIO_GPFSEL_REG_BASE(pin / 10);
 	val = readl(base);
