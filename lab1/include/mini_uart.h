@@ -6,5 +6,8 @@
 
 void mini_uart_init();
 
+char mini_uart_getc();
+void mini_uart_putc(unsigned char c);
+void mini_uart_puts(const char *s);
 
 #endif

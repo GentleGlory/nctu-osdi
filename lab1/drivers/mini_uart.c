@@ -31,8 +31,43 @@ void mini_uart_init()
 	writel(AUX_MU_BAUD, 270);
 
 	val = AUX_MU_IIR_CLEAR_RX_FIFO | AUX_MU_IIR_CLEAR_TX_FIFO;
-	writel(AUX_MU_IIR_REG, val);
+	writel(AUX_MU_IIR_REG, 0xc6);
 
 	val = AUX_MU_CNTL_RX_EN | AUX_MU_CNTL_TX_EN;
 	writel(AUX_MU_CNTL_REG, val);
+}
+
+char mini_uart_getc()
+{
+	char c;
+	u32 val;
+	do {
+		val = readl(AUX_MU_LSR_REG);
+		asm volatile("nop");
+	} while (!(val & AUX_MU_LSR_DATA_READY));
+
+	c = (char) readl(AUX_MU_IO_REG);
+
+	return c == '\r' ? '\n' : c;
+}
+
+void mini_uart_putc(unsigned char c)
+{
+	u32 val;
+	do {
+		val = readl(AUX_MU_LSR_REG);
+		asm volatile("nop");
+	} while (!(val & AUX_MU_LSR_TX_EMPTY));
+
+	writel(AUX_MU_IO_REG, c);
+}
+
+void mini_uart_puts(const char *s)
+{
+	while (*s) {
+		if (*s == '\n')
+			mini_uart_putc('\r');
+		
+		mini_uart_putc(*s++);
+	}
 }

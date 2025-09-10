@@ -7,10 +7,19 @@ SECTIONS
 		*(.text)
 	}
 
+	.data : {
+		*(.data .data.*)
+	}
+
+	.rodata : { 
+		*(.rodata .rodata.*)
+	}
+
 	.bss : {
 		. = ALIGN(16);
 		__bss_start = .;
-		*(.bss)
+		*(.bss .bss.*)
+		*(COMMON)
 		. = ALIGN(16);
 		__bss_end = .;
 	}

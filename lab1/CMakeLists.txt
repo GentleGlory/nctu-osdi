@@ -17,8 +17,17 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Compiler flags
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O2 -ffreestanding -nostdinc -nostdlib")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -ffreestanding -nostdinc -nostdlib")
 set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS}")
+
+# Add debug info and optimization based on build type
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -g")
+else()
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O2")
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -g")
+endif()
 
 # Linker flags to disable standard startup files and libraries
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -nostartfiles")
@@ -27,7 +36,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -nostartfiles")
 enable_language(C ASM)
 
 # Find all source files
-file(GLOB C_SOURCES "kernel/*.c" "drivers/*.c")
+file(GLOB C_SOURCES "kernel/*.c" "drivers/*.c" "libs/*.c")
 file(GLOB ASM_SOURCES "kernel/*.S")
 
 # Create kernel8 executable
@@ -51,7 +60,7 @@ add_custom_command(
 
 # Custom target for running in QEMU
 add_custom_target(run
-    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -d in_asm
+    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -serial null -serial stdio
     DEPENDS kernel8.elf
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running kernel8.img in QEMU"
@@ -66,7 +75,7 @@ add_custom_target(copy_gdb_script ALL
 
 # Custom target for QEMU debug mode
 add_custom_target(qemu_debug
-    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -S -s
+    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -S -s -serial null -serial stdio
     DEPENDS kernel8.elf
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running kernel8.img in QEMU debug mode"

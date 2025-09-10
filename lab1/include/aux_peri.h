@@ -25,6 +25,8 @@
 #define AUX_MU_MCR_REG				(AUX_BASE + 0x50)
 
 #define AUX_MU_LSR_REG				(AUX_BASE + 0x54)
+#define   AUX_MU_LSR_DATA_READY		BIT(0)
+#define   AUX_MU_LSR_TX_EMPTY		BIT(5)
 
 #define AUX_MU_CNTL_REG				(AUX_BASE + 0x60)
 #define   AUX_MU_CNTL_RX_EN			BIT(0)

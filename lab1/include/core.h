@@ -14,16 +14,19 @@
      (~0UL >> (BITS_PER_LONG - 1 - (h))))
 
 typedef unsigned int u32;
-typedef unsigned long uintptr_t;
 
-static inline void writel(uintptr_t reg, u32 val)
+static inline void writel(unsigned long long address, u32 val)
 {
-	*(volatile u32*)(reg) = val;
+	//*(volatile u32*)(reg) = val;
+	volatile u32* reg = (volatile u32*) address;
+	(*reg) = val;
 }
 
-static inline u32 readl(uintptr_t reg)
+static inline u32 readl(unsigned long long address)
 {
-	return *(volatile u32*)(reg);
+	//return *(volatile u32*)(reg);
+	volatile u32* reg = (volatile u32*) address;
+	return (*reg);
 }
 
 #endif
