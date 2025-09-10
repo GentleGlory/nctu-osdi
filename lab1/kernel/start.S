@@ -20,3 +20,4 @@ _start:
 	stp x2, x3, [x0], #16
 	b 3b
 4:	b main
+	b 4b

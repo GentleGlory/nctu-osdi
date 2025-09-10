@@ -15,6 +15,10 @@
 
 typedef unsigned int u32;
 
+#ifndef NULL
+#define NULL ((void*)0)
+#endif
+
 static inline void writel(unsigned long long address, u32 val)
 {
 	//*(volatile u32*)(reg) = val;

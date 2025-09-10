@@ -71,3 +71,10 @@ void mini_uart_puts(const char *s)
 		mini_uart_putc(*s++);
 	}
 }
+
+void mini_uart_flush()
+{
+	while (readl(AUX_MU_LSR_REG) & AUX_MU_LSR_DATA_READY) {
+		readl(AUX_MU_IO_REG);
+	}
+}
