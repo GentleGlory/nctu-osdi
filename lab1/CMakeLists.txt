@@ -73,6 +73,13 @@ add_custom_target(copy_gdb_script ALL
     VERBATIM
 )
 
+# Copy send_file script to build directory (always check for updates)
+add_custom_target(copy_send_file_script ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/scripts/send_file.sh ${CMAKE_BINARY_DIR}/send_file.sh
+    COMMENT "Copying send_file script to build directory"
+    VERBATIM
+)
+
 # Custom target for QEMU debug mode
 add_custom_target(qemu_debug
     COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -S -s -serial null -serial stdio

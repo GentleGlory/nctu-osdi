@@ -9,6 +9,10 @@ static char cmd_buffer[SHELL_BUFFER_LEN] = {0};
 
 static void hello_world_cmd(void);
 static void help_cmd(void);
+static void read_text_cmd(void);
+static enum ANSI_ESC decode_csi_key();
+static enum ANSI_ESC decode_ansi_escape();
+
 
 static const struct shell_cmd shell_cmds[] = {
 	{	.cmd = "hello",
@@ -18,6 +22,10 @@ static const struct shell_cmd shell_cmds[] = {
 	{	.cmd = "help",
 		.description = "Help",
 		.cmd_fn_ptr = help_cmd,
+	},
+	{	.cmd = "read_file",
+		.description = "Read text file contents from terminal.",
+		.cmd_fn_ptr = read_text_cmd,
 	},
 	{},
 };
@@ -40,7 +48,26 @@ static void help_cmd(void)
 	}
 }
 
-static enum ANSI_ESC decode_csi_key() {
+static void read_text_cmd(void)
+{
+	char c;
+
+	printf("\rReady to read text file.\n");
+	printf("\rSending ctrl+c will stop the transmission.\n");
+
+	while (1) {
+		c = mini_uart_getc();
+		//ctrl+c 
+		if (c == 3) {
+			return;
+		}
+			
+		mini_uart_putc(c);
+	}
+}
+
+static enum ANSI_ESC decode_csi_key() 
+{
 	char c = mini_uart_getc();
 	if (c == 'C') {
 		return ANSI_ESC_CURSOR_FORWARD;
@@ -55,7 +82,8 @@ static enum ANSI_ESC decode_csi_key() {
 	return ANSI_ESC_UNKNOWN;
 }
 
-static enum ANSI_ESC decode_ansi_escape() {
+static enum ANSI_ESC decode_ansi_escape() 
+{
 	char c = mini_uart_getc();
 	if (c == '[') {
 		return decode_csi_key();
@@ -110,7 +138,8 @@ void shell_main()
 		} else if (c == 3) { // CTRL-C
 			cmd_buffer[0] = '\0';
 			cursor_idx = 0;
-			cmd_idx = 0;            
+			cmd_idx = 0;
+			printf("\r\e[K# ");
 		} else if (c == 8 || c == 127) {// Backspace
 			if (cursor_idx > 0) {
 				cursor_idx--;
