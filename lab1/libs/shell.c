@@ -3,6 +3,7 @@
 #include "core.h"
 #include "string.h"
 #include "time.h"
+#include "power.h"
 
 static int cmd_idx = 0;
 static int cursor_idx = 0;
@@ -11,7 +12,8 @@ static char cmd_buffer[SHELL_BUFFER_LEN] = {0};
 static void hello_world_cmd(void);
 static void help_cmd(void);
 static void read_text_cmd(void);
-static void time_stamp(void);
+static void timestamp_cmd(void);
+static void reboot_cmd(void);
 
 static enum ANSI_ESC decode_csi_key();
 static enum ANSI_ESC decode_ansi_escape();
@@ -32,7 +34,11 @@ static const struct shell_cmd shell_cmds[] = {
 	},
 	{	.cmd = "timestamp",
 		.description = "Get timestamp.",
-		.cmd_fn_ptr = time_stamp,
+		.cmd_fn_ptr = timestamp_cmd,
+	},
+	{	.cmd = "reboot",
+		.description = "Reboot the system.",
+		.cmd_fn_ptr = reboot_cmd,
 	},
 	{},
 };
@@ -73,13 +79,18 @@ static void read_text_cmd(void)
 	}
 }
 
-static void time_stamp(void)
+static void timestamp_cmd(void)
 {
 	struct rational r = {0, 0};
 	
 	r = get_time_tick();
 
 	printf("\r[%lld.%lld]\n",r.num, r.den);
+}
+
+static void reboot_cmd(void)
+{
+	reset(10);
 }
 
 static enum ANSI_ESC decode_csi_key() 
