@@ -69,3 +69,75 @@ void mailbox_get_vc_mem_info(uint32_t *address, uint32_t *size)
 	*address = mailbox_buffer[5];
 	*size = mailbox_buffer[6];
 }
+
+void mailbox_get_clock_state(uint32_t clock_id, int *is_on, int *exist)
+{
+	mailbox_buffer[0] = 8 * 4;
+	mailbox_buffer[1] = MAILBOX_REQUEST_CODE;
+
+	mailbox_buffer[2] = MAILBOX_GET_CLK_STATE;
+	mailbox_buffer[3] = 8;
+	mailbox_buffer[4] = MAILBOX_TAG_REQUEST_CODE;
+	mailbox_buffer[5] = clock_id;
+	mailbox_buffer[6] = 0;
+	mailbox_buffer[7] = MAILBOX_END_TAG;
+
+	mailbox_call(mailbox_buffer);
+
+	(*is_on) = mailbox_buffer[6] & BIT(0);
+	(*exist) = mailbox_buffer[6] & BIT(1);
+}
+
+int mailbox_set_clock_state(uint32_t clock_id, int on)
+{
+	mailbox_buffer[0] = 8 * 4;
+	mailbox_buffer[1] = MAILBOX_REQUEST_CODE;
+
+	mailbox_buffer[2] = MAILBOX_SET_CLK_STATE;
+	mailbox_buffer[3] = 8;
+	mailbox_buffer[4] = MAILBOX_TAG_REQUEST_CODE;
+	mailbox_buffer[5] = clock_id;
+	mailbox_buffer[6] = (on ? BIT(0) : 0 ) | BIT(1);
+	mailbox_buffer[7] = MAILBOX_END_TAG;
+
+	mailbox_call(mailbox_buffer);
+
+	if ((on != 0 && (mailbox_buffer[6] & BIT(0))) || 
+		(on == 0 && !(mailbox_buffer[6] & BIT(0)))) {
+		return 1;
+	}
+	return 0;
+}
+
+unsigned int mailbox_get_clock_rate(uint32_t clock_id) 
+{
+	mailbox_buffer[0] = 8 * 4;
+	mailbox_buffer[1] = MAILBOX_REQUEST_CODE;
+
+	mailbox_buffer[2] = MAILBOX_GET_CLK_RATE;
+	mailbox_buffer[3] = 8;
+	mailbox_buffer[4] = MAILBOX_TAG_REQUEST_CODE;
+	mailbox_buffer[5] = clock_id;
+	mailbox_buffer[6] = 0;
+	mailbox_buffer[7] = MAILBOX_END_TAG;
+
+	mailbox_call(mailbox_buffer);
+
+	return mailbox_buffer[6];
+} 
+
+void mailbox_set_clock_rate(uint32_t clock_id, uint32_t clock_rate, uint32_t skip_turbo)
+{
+	mailbox_buffer[0] = 9 * 4;
+	mailbox_buffer[1] = MAILBOX_REQUEST_CODE;
+
+	mailbox_buffer[2] = MAILBOX_SET_CLK_RATE;
+	mailbox_buffer[3] = 12; 
+	mailbox_buffer[4] = MAILBOX_TAG_REQUEST_CODE;
+	mailbox_buffer[5] = clock_id;
+	mailbox_buffer[6] = clock_rate;
+	mailbox_buffer[7] = skip_turbo;
+	mailbox_buffer[8] = MAILBOX_END_TAG;
+
+	mailbox_call(mailbox_buffer);
+}
