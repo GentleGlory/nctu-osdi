@@ -60,7 +60,7 @@ add_custom_command(
 
 # Custom target for running in QEMU
 add_custom_target(run
-    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -serial null -serial stdio
+    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial stdio
     DEPENDS kernel8.elf
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running kernel8.img in QEMU"
@@ -82,7 +82,7 @@ add_custom_target(copy_send_file_script ALL
 
 # Custom target for QEMU debug mode
 add_custom_target(qemu_debug
-    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -display none -S -s -serial null -serial stdio
+    COMMAND qemu-system-aarch64 -M raspi3b -kernel kernel8.img -S -s -serial stdio
     DEPENDS kernel8.elf
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Running kernel8.img in QEMU debug mode"
