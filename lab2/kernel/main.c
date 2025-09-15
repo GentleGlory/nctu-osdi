@@ -2,6 +2,7 @@
 #include "string.h"
 #include "shell.h"
 #include "mailbox.h"
+#include "fb.h"
 
 void print_board_info(void)
 {
@@ -22,6 +23,9 @@ void main(void)
 
 	printf("\rFrank OS init\n");
 	print_board_info();
+
+	if (fb_init() == 0)
+		fb_draw_splash_image();
 
 	uart0_flush();
 

@@ -2,6 +2,7 @@
 #define _MAILBOX_H
 
 #include "core.h"
+#include "fb.h"
 
 #define MAILBOX_BASE	(MMIO_BASE + 0x0000b880)
 
@@ -21,6 +22,13 @@
 #define MAILBOX_GET_CLK_RATE			0x00030002
 #define MAILBOX_SET_CLK_RATE			0x00038002
 
+#define MAILBOX_FB_ALLOC_BUFFER			0x00040001
+#define MAILBOX_FB_SET_PHY_WH			0x00048003
+#define MAILBOX_FB_SET_VIRTUAL_WH		0x00048004
+#define MAILBOX_FB_SET_DEPTH			0x00048005
+#define MAILBOX_FB_SET_RGB_ORDER		0x00048006
+#define MAILBOX_FB_GET_PITCH			0x00040008
+#define MAILBOX_FB_SET_VIRTUAL_OFFSET	0x00048009
 
 #define MAILBOX_PROPERTY_CHANNEL		8
 
@@ -38,5 +46,6 @@ void mailbox_get_clock_state(uint32_t clock_id, int *is_on, int *exist);
 int mailbox_set_clock_state(uint32_t clock_id, int on);
 unsigned int mailbox_get_clock_rate(uint32_t clock_id);
 void mailbox_set_clock_rate(uint32_t clock_id, uint32_t clock_rate, uint32_t skip_turbo);
+int mailbox_init_fb_info(struct fb_info *fb_info);
 
 #endif
