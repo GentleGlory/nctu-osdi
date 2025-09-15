@@ -1,4 +1,4 @@
-#include "mini_uart.h"
+#include "uart0.h"
 #include "string.h"
 #include "shell.h"
 #include "mailbox.h"
@@ -18,12 +18,12 @@ void print_board_info(void)
 
 void main(void)
 {
-	mini_uart_init();
+	uart0_init();
 
 	printf("\rFrank OS init\n");
 	print_board_info();
 
-	mini_uart_flush();
+	uart0_flush();
 
 	shell_main();
 

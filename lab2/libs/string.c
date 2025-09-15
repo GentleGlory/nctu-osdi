@@ -1,4 +1,4 @@
-#include "mini_uart.h"
+#include "uart0.h"
 #include "string.h"
 
 
@@ -149,47 +149,47 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 			if ((*fmt) == '\0') {
 				break;
 			} else if((*fmt) == '%') {
-				mini_uart_putc('%');
+				uart0_putc('%');
 				fmt ++;
 			} else if((*fmt) == 'c') {
 				char c = __builtin_va_arg(args, int);
 				char temp[32] ={0};
 				lld_to_str(c,temp);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt ++;	
 			} else if((*fmt) == 'd') {
 				int i = __builtin_va_arg(args, int);
 				char temp[32] ={0};
 				lld_to_str(i,temp);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt ++;	
 			} else if((*fmt) == 's') {
 				char* s = __builtin_va_arg(args, char*);
-				mini_uart_puts(s);
+				uart0_puts(s);
 				fmt++;
 			} else if((*fmt) == 'f') {
 				float f = __builtin_va_arg(args, double);
 				char temp[32] ={0};
 				double_to_str(f,6,temp);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'u') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_str(u,temp);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'x') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_hex_str(u,temp, 0);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'X') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_hex_str(u,temp, 1);
-				mini_uart_puts(temp);
+				uart0_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'l') {
 				fmt++;
@@ -201,25 +201,25 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 						long long l = __builtin_va_arg(args, long long);
 						char temp[64] ={0};	
 						lld_to_str(l,temp);
-						mini_uart_puts(temp);
+						uart0_puts(temp);
 						fmt ++;	
 					} else if((*fmt) == 'u') {
 						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
 						char temp[64] ={0};
 						llu_to_str(llu,temp);
-						mini_uart_puts(temp);
+						uart0_puts(temp);
 						fmt++;
 					}	
 				} else if((*fmt) == 'f') {
 					double d = __builtin_va_arg(args, double);
 					char temp[64] ={0};
 					double_to_str(d,15,temp);
-					mini_uart_puts(temp);
+					uart0_puts(temp);
 					fmt++;
 				}
 			}
 		} else {
-			mini_uart_putc((*fmt));
+			uart0_putc((*fmt));
 			fmt++;
 		}
 	}
