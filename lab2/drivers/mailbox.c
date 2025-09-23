@@ -226,3 +226,23 @@ int mailbox_init_fb_info(struct fb_info *fb_info)
 
 	return -1;
 }
+
+void mailbox_get_arm_mem_info(uint32_t *address, uint32_t *size)
+{
+	mailbox_buffer[0] = 8 * 4; // buffer size in bytes
+	mailbox_buffer[1] = MAILBOX_REQUEST_CODE;
+
+	// tags begin
+	mailbox_buffer[2] = MAILBOX_GET_ARM_MEMORY_BASE; // tag identifier
+	mailbox_buffer[3] = 8; // maximum of request and response value buffer's length.
+	mailbox_buffer[4] = MAILBOX_TAG_REQUEST_CODE;
+	mailbox_buffer[5] = 0; // value buffer
+	mailbox_buffer[6] = 0; // value buffer
+	// tags end
+	mailbox_buffer[7] = MAILBOX_END_TAG;
+
+	mailbox_call(mailbox_buffer); // message passing procedure call, you should implement it following the 6 steps provided above.
+
+	*address = mailbox_buffer[5];
+	*size = mailbox_buffer[6];
+}

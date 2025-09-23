@@ -75,3 +75,17 @@ void uart0_flush()
 		readl(UART0_DR_REG);
 	}
 }
+
+char uart0_getraw()
+{
+	char c;
+	uint32_t val;
+	do {
+		val = readl(UART0_FR_REG);
+		asm volatile("nop");
+	} while ((val & UART0_FR_RXFE));
+
+	c = (char) readl(UART0_DR_REG);
+
+	return c;
+}

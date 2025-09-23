@@ -6,6 +6,10 @@
 #include "power.h"
 #include "mailbox.h"
 
+#ifdef BOOTLOADER
+#include "image_loader.h"
+#endif
+
 static int cmd_idx = 0;
 static int cursor_idx = 0;
 static char cmd_buffer[SHELL_BUFFER_LEN] = {0};
@@ -15,6 +19,10 @@ static void help_cmd(void);
 static void read_text_cmd(void);
 static void timestamp_cmd(void);
 static void reboot_cmd(void);
+
+#ifdef BOOTLOADER
+static void loadimg_cmd(void); 
+#endif
 
 static enum ANSI_ESC decode_csi_key();
 static enum ANSI_ESC decode_ansi_escape();
@@ -40,6 +48,13 @@ static const struct shell_cmd shell_cmds[] = {
 		.description = "Reboot the system.",
 		.cmd_fn_ptr = reboot_cmd,
 	},
+#ifdef BOOTLOADER
+	{
+		.cmd = "loadimg",
+		.description = "Load kernel from uart.",
+		.cmd_fn_ptr = loadimg_cmd,
+	},
+#endif
 	{},
 };
 
@@ -92,6 +107,13 @@ static void reboot_cmd(void)
 {
 	reset(10);
 }
+
+#ifdef BOOTLOADER
+static void loadimg_cmd(void)
+{
+	load_image();
+}
+#endif
 
 static enum ANSI_ESC decode_csi_key() 
 {

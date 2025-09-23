@@ -209,7 +209,19 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 						llu_to_str(llu,temp);
 						uart0_puts(temp);
 						fmt++;
-					}	
+					} else if ((*fmt) == 'x') {
+						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
+						char temp[64] ={0};
+						llu_to_hex_str(llu,temp, 0);
+						uart0_puts(temp);
+						fmt++;
+					} else if ((*fmt) == 'X') {
+						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
+						char temp[64] ={0};
+						llu_to_hex_str(llu,temp, 1);
+						uart0_puts(temp);
+						fmt++;
+					}
 				} else if((*fmt) == 'f') {
 					double d = __builtin_va_arg(args, double);
 					char temp[64] ={0};
@@ -223,4 +235,346 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 			fmt++;
 		}
 	}
+}
+
+static int skip_whitespace(const char* str, int pos)
+{
+	while (str[pos] == ' ' || str[pos] == '\t' || str[pos] == '\n' || str[pos] == '\r') {
+		pos++;
+	}
+	return pos;
+}
+
+static int str_to_int(const char* str, int* pos, int* result)
+{
+	int sign = 1;
+	int value = 0;
+	int start_pos = *pos;
+
+	if (str[*pos] == '-') {
+		sign = -1;
+		(*pos)++;
+	} else if (str[*pos] == '+') {
+		(*pos)++;
+	}
+
+	if (str[*pos] < '0' || str[*pos] > '9') {
+		*pos = start_pos;
+		return 0;
+	}
+
+	while (str[*pos] >= '0' && str[*pos] <= '9') {
+		value = value * 10 + (str[*pos] - '0');
+		(*pos)++;
+	}
+
+	*result = value * sign;
+	return 1;
+}
+
+static int str_to_char(const char* str, int* pos, char* result)
+{
+	if (str[*pos] == '\0') {
+		return 0;
+	}
+
+	*result = str[*pos];
+	(*pos)++;
+	return 1;
+}
+
+static int str_to_string(const char* str, int* pos, char* result, int max_len)
+{
+	int i = 0;
+
+	while (str[*pos] != ' ' && str[*pos] != '\t' && str[*pos] != '\n' &&
+		   str[*pos] != '\r' && str[*pos] != '\0' && i < max_len - 1) {
+		result[i] = str[*pos];
+		i++;
+		(*pos)++;
+	}
+
+	result[i] = '\0';
+	return i > 0 ? 1 : 0;
+}
+
+static int str_to_hex(const char* str, int* pos, unsigned int* result)
+{
+	unsigned int value = 0;
+	int start_pos = *pos;
+	int digit_count = 0;
+
+	while (str[*pos] != '\0') {
+		char c = str[*pos];
+		int digit_value = -1;
+
+		if (c >= '0' && c <= '9') {
+			digit_value = c - '0';
+		} else if (c >= 'a' && c <= 'f') {
+			digit_value = c - 'a' + 10;
+		} else if (c >= 'A' && c <= 'F') {
+			digit_value = c - 'A' + 10;
+		} else {
+			break;
+		}
+
+		value = (value << 4) | digit_value;
+		(*pos)++;
+		digit_count++;
+	}
+
+	if (digit_count == 0) {
+		*pos = start_pos;
+		return 0;
+	}
+
+	*result = value;
+	return 1;
+}
+
+static int str_to_lld(const char* str, int* pos, long long* result)
+{
+	int sign = 1;
+	long long value = 0;
+	int start_pos = *pos;
+
+	if (str[*pos] == '-') {
+		sign = -1;
+		(*pos)++;
+	} else if (str[*pos] == '+') {
+		(*pos)++;
+	}
+
+	if (str[*pos] < '0' || str[*pos] > '9') {
+		*pos = start_pos;
+		return 0;
+	}
+
+	while (str[*pos] >= '0' && str[*pos] <= '9') {
+		value = value * 10 + (str[*pos] - '0');
+		(*pos)++;
+	}
+
+	*result = value * sign;
+	return 1;
+}
+
+static int str_to_llu(const char* str, int* pos, unsigned long long* result)
+{
+	unsigned long long value = 0;
+	int start_pos = *pos;
+
+	if (str[*pos] == '+') {
+		(*pos)++;
+	}
+
+	if (str[*pos] < '0' || str[*pos] > '9') {
+		*pos = start_pos;
+		return 0;
+	}
+
+	while (str[*pos] >= '0' && str[*pos] <= '9') {
+		value = value * 10 + (str[*pos] - '0');
+		(*pos)++;
+	}
+
+	*result = value;
+	return 1;
+}
+
+static int str_to_llx(const char* str, int* pos, unsigned long long* result)
+{
+	unsigned long long value = 0;
+	int start_pos = *pos;
+	int digit_count = 0;
+
+	while (str[*pos] != '\0') {
+		char c = str[*pos];
+		int digit_value = -1;
+
+		if (c >= '0' && c <= '9') {
+			digit_value = c - '0';
+		} else if (c >= 'a' && c <= 'f') {
+			digit_value = c - 'a' + 10;
+		} else if (c >= 'A' && c <= 'F') {
+			digit_value = c - 'A' + 10;
+		} else {
+			break;
+		}
+
+		value = (value << 4) | digit_value;
+		(*pos)++;
+		digit_count++;
+	}
+
+	if (digit_count == 0) {
+		*pos = start_pos;
+		return 0;
+	}
+
+	*result = value;
+	return 1;
+}
+
+static void read_input_line(char* buffer, int max_len)
+{
+	int i = 0;
+	char c;
+
+	while (i < max_len - 1) {
+		c = uart0_getc();
+
+		if (c == '\r' || c == '\n') {
+			uart0_putc('\n');
+			break;
+		} else if (c == '\b' || c == 127) {
+			if (i > 0) {
+				i--;
+				uart0_putc('\b');
+				uart0_putc(' ');
+				uart0_putc('\b');
+			}
+		} else if (c >= 32 && c <= 126) {
+			buffer[i] = c;
+			uart0_putc(c);
+			i++;
+		}
+	}
+
+	buffer[i] = '\0';
+}
+
+int simple_scanf(const char* fmt, ...)
+{
+	char input_buffer[256];
+	__builtin_va_list args;
+	__builtin_va_start(args, fmt);
+
+	read_input_line(input_buffer, sizeof(input_buffer));
+
+	int fmt_pos = 0;
+	int input_pos = 0;
+	int matched = 0;
+
+	while (fmt[fmt_pos] != '\0') {
+		input_pos = skip_whitespace(input_buffer, input_pos);
+
+		if (fmt[fmt_pos] == '%') {
+			fmt_pos++;
+
+			if (fmt[fmt_pos] == '\0') {
+				break;
+			}
+
+			switch (fmt[fmt_pos]) {
+				case 'd': {
+					int* int_ptr = __builtin_va_arg(args, int*);
+					int value;
+					if (str_to_int(input_buffer, &input_pos, &value)) {
+						*int_ptr = value;
+						matched++;
+					} else {
+						goto end;
+					}
+					break;
+				}
+				case 'c': {
+					char* char_ptr = __builtin_va_arg(args, char*);
+					char value;
+					if (str_to_char(input_buffer, &input_pos, &value)) {
+						*char_ptr = value;
+						matched++;
+					} else {
+						goto end;
+					}
+					break;
+				}
+				case 's': {
+					char* str_ptr = __builtin_va_arg(args, char*);
+					if (str_to_string(input_buffer, &input_pos, str_ptr, 256)) {
+						matched++;
+					} else {
+						goto end;
+					}
+					break;
+				}
+				case 'x': {
+					unsigned int* uint_ptr = __builtin_va_arg(args, unsigned int*);
+					unsigned int value;
+					if (str_to_hex(input_buffer, &input_pos, &value)) {
+						*uint_ptr = value;
+						matched++;
+					} else {
+						goto end;
+					}
+					break;
+				}
+				case 'l': {
+					fmt_pos++;
+					if (fmt[fmt_pos] == 'l') {
+						fmt_pos++;
+						if (fmt[fmt_pos] == 'd') {
+							long long* lld_ptr = __builtin_va_arg(args, long long*);
+							long long value;
+							if (str_to_lld(input_buffer, &input_pos, &value)) {
+								*lld_ptr = value;
+								matched++;
+							} else {
+								goto end;
+							}
+						} else if (fmt[fmt_pos] == 'u') {
+							unsigned long long* llu_ptr = __builtin_va_arg(args, unsigned long long*);
+							unsigned long long value;
+							if (str_to_llu(input_buffer, &input_pos, &value)) {
+								*llu_ptr = value;
+								matched++;
+							} else {
+								goto end;
+							}
+						} else if (fmt[fmt_pos] == 'x') {
+							unsigned long long* llx_ptr = __builtin_va_arg(args, unsigned long long*);
+							unsigned long long value;
+							if (str_to_llx(input_buffer, &input_pos, &value)) {
+								*llx_ptr = value;
+								matched++;
+							} else {
+								goto end;
+							}
+						} else {
+							goto end;
+						}
+					} else {
+						goto end;
+					}
+					break;
+				}
+				case '%':
+					if (input_buffer[input_pos] == '%') {
+						input_pos++;
+					} else {
+						goto end;
+					}
+					break;
+				default:
+					goto end;
+			}
+
+			fmt_pos++;
+		} else if (fmt[fmt_pos] == ' ' || fmt[fmt_pos] == '\t' ||
+				   fmt[fmt_pos] == '\n' || fmt[fmt_pos] == '\r') {
+			input_pos = skip_whitespace(input_buffer, input_pos);
+			fmt_pos++;
+		} else {
+			if (input_buffer[input_pos] == fmt[fmt_pos]) {
+				input_pos++;
+				fmt_pos++;
+			} else {
+				goto end;
+			}
+		}
+	}
+
+end:
+	__builtin_va_end(args);
+	return matched;
 }

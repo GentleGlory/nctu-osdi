@@ -43,5 +43,6 @@ char uart0_getc();
 void uart0_putc(unsigned char c);
 void uart0_puts(const char *s);
 void uart0_flush();
+char uart0_getraw();
 
 #endif

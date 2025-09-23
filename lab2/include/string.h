@@ -15,4 +15,6 @@ void reverse_str(char* str, int len);
 
 void printf(const char* fmt,...);
 
+int simple_scanf(const char* fmt,...);
+
 #endif

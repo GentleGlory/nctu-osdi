@@ -16,6 +16,7 @@
 
 //Tags
 #define MAILBOX_GET_BOARD_REVISION		0x00010002
+#define MAILBOX_GET_ARM_MEMORY_BASE		0x00010005
 #define MAILBOX_GET_VC_MEMORY_BASE		0x00010006
 #define MAILBOX_GET_CLK_STATE			0x00030001
 #define MAILBOX_SET_CLK_STATE			0x00038001
@@ -42,6 +43,7 @@
 
 uint32_t mailbox_get_board_reversion();
 void mailbox_get_vc_mem_info(uint32_t *address, uint32_t *size);
+void mailbox_get_arm_mem_info(uint32_t *address, uint32_t *size);
 void mailbox_get_clock_state(uint32_t clock_id, int *is_on, int *exist);
 int mailbox_set_clock_state(uint32_t clock_id, int on);
 unsigned int mailbox_get_clock_rate(uint32_t clock_id);
