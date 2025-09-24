@@ -1,5 +1,7 @@
 #include "exception.h"
 #include "string.h"
+#include "irq.h"
+
 
 void show_exception_status(uint64_t type, uint64_t esr, uint64_t elr)
 {
@@ -32,4 +34,9 @@ void sync_exc_router(uint64_t esr, uint64_t elr)
 	default:
 		printf("\rUnhandeled iss:%x\n",iss);
 	}
+}
+
+void irq_exc_router()
+{
+	irq_handler();
 }

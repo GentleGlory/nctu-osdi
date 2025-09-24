@@ -5,6 +5,8 @@
 #include "time.h"
 #include "power.h"
 #include "mailbox.h"
+#include "timer.h"
+#include "irq.h"
 
 #ifdef BOOTLOADER
 #include "image_loader.h"
@@ -20,6 +22,7 @@ static void read_text_cmd(void);
 static void timestamp_cmd(void);
 static void reboot_cmd(void);
 static void exc_cmd();
+static void irq_cmd();
 
 #ifdef BOOTLOADER
 static void loadimg_cmd(void); 
@@ -52,6 +55,10 @@ static const struct shell_cmd shell_cmds[] = {
 	{	.cmd = "exc",
 		.description = "Exception test.",
 		.cmd_fn_ptr = exc_cmd,
+	},	
+	{	.cmd = "irq",
+		.description = "Enable timer",
+		.cmd_fn_ptr = irq_cmd,
 	},	
 #ifdef BOOTLOADER
 	{
@@ -121,6 +128,13 @@ static void exc_cmd()
 		:		// No input operands
 		:		// No clobbers
 	);
+}
+
+static void irq_cmd()
+{
+	core_timer_enable();
+	local_timer_init();
+	irq_enable();
 }
 
 #ifdef BOOTLOADER

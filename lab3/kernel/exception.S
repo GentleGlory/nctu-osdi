@@ -32,7 +32,7 @@
 			b sync_exc_handler
 
 		el\()CURRENT_EL\()h_64_irq:
-			handle_invalid_entry	IRQ_INVALID_CURRENT_ELh
+			b irq_exc_handler
 
 		el\()CURRENT_EL\()h_64_fiq:
 			handle_invalid_entry	FIQ_INVALID_CURRENT_ELh
@@ -118,12 +118,19 @@
 		eret
 	.endm
 
-	.macro DEFINE_SYNC_EXEC_HANDLER
+	.macro DEFINE_SYNC_EXC_HANDLER
 		sync_exc_handler:
 			kernel_entry
 			mrs x0, esr_el\()CURRENT_EL
 			mrs x1, elr_el\()CURRENT_EL
 			bl  sync_exc_router
+			kernel_exit
+	.endm
+
+	.macro DEFINE_IRQ_EXC_HANDLER
+		irq_exc_handler:
+			kernel_entry
+			bl  irq_exc_router
 			kernel_exit
 	.endm
 
@@ -156,4 +163,5 @@ exception_table:
 DEFINE_CURRENT_EL_EXCEPTION_HANDLERS
 DEFINE_LOWER_EL_EXCEPTION_HANDLERS
 
-DEFINE_SYNC_EXEC_HANDLER
+DEFINE_SYNC_EXC_HANDLER
+DEFINE_IRQ_EXC_HANDLER

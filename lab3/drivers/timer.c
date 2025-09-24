@@ -1,0 +1,48 @@
+#include "timer.h"
+#include "irq.h"
+#include "string.h"
+
+static uint64_t core_timer_jiffies = 0;
+static uint64_t local_timer_jiffies = 0;
+
+void core_timer_enable()
+{
+	asm volatile (
+		"mov x0, #1 \n"
+		"msr cntp_ctl_el0, x0 \n"
+		"mov x0, %0 \n"
+		"msr cntp_tval_el0, x0 \n"
+		"mov x0, #2 \n"
+		"ldr x1, =%1 \n"
+		"str x0, [x1] \n"
+		:
+		: "i" (CORE_TIMER_EXPIRE_PERIOD), "i" (CORE0_TIMER_IRQ_CTRL_REG)
+		: "x0", "x1", "memory"
+	);
+}
+
+void core_timer_reload()
+{
+	asm volatile (
+		"mov x0, %0 \n"
+		"msr cntp_tval_el0, x0 \n"
+		:
+		: "i" (CORE_TIMER_EXPIRE_PERIOD)
+		: "x0", "memory"
+	);
+
+	printf("\rCore timer jiffies:%llu\n", ++core_timer_jiffies);
+}
+
+void local_timer_init()
+{
+	uint32_t flag = 0x30000000; // enable timer and interrupt.
+	uint32_t reload = 25000000;
+	writel(LOCAL_TIMER_CTRL_REG, flag | reload);
+}
+
+void local_timer_reload()
+{
+	writel(LOCAL_TIMER_IRQ_CLR_REG, 0xc0000000); // clear interrupt and reload.
+	printf("\rLocal timer jiffies:%llu\n", ++local_timer_jiffies);
+}
