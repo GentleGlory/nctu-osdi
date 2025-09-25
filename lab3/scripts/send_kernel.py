@@ -78,8 +78,8 @@ class KernelSender:
 				elif "Please input kernel load address (default: 0x80000):" in line:
 					load_address = input("Enter kernel load address (press Enter for default 0x80000): ")
 					if not load_address.strip():
-						load_address = "0x80000"
-					print(f"Using load address: {load_address}")
+						load_address = "80000"
+					print(f"Using load address: 0x{load_address}")
 					self.ser.write(f"{load_address}\n".encode())
 					self.state = "waiting_for_size_request"
 
