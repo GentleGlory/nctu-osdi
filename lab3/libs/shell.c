@@ -1,5 +1,5 @@
 #include "shell.h"
-#include "uart0.h"
+#include "uart.h"
 #include "core.h"
 #include "string.h"
 #include "time.h"
@@ -96,13 +96,13 @@ static void read_text_cmd(void)
 	printf("\rSending ctrl+c will stop the transmission.\n");
 
 	while (1) {
-		c = uart0_getc();
+		c = uart_getc();
 		//ctrl+c 
 		if (c == 3) {
 			return;
 		}
 			
-		uart0_putc(c);
+		uart_putc(c);
 	}
 }
 
@@ -133,8 +133,7 @@ static void exc_cmd()
 static void irq_cmd()
 {
 	core_timer_enable();
-	local_timer_init();
-	irq_enable();
+	system_timer_init();
 }
 
 #ifdef BOOTLOADER
@@ -146,13 +145,13 @@ static void loadimg_cmd(void)
 
 static enum ANSI_ESC decode_csi_key() 
 {
-	char c = uart0_getc();
+	char c = uart_getc();
 	if (c == 'C') {
 		return ANSI_ESC_CURSOR_FORWARD;
 	} else if (c == 'D') {
 		return ANSI_ESC_CURSOR_BACKWARD;
 	} else if (c == '3') {
-		c = uart0_getc();
+		c = uart_getc();
 		if (c == '~') {
 			return ANSI_ESC_DELETE;
 		}
@@ -162,7 +161,7 @@ static enum ANSI_ESC decode_csi_key()
 
 static enum ANSI_ESC decode_ansi_escape() 
 {
-	char c = uart0_getc();
+	char c = uart_getc();
 	if (c == '[') {
 		return decode_csi_key();
 	}
@@ -190,7 +189,7 @@ void shell_main()
 	printf("\r# ");
 	
 	while (1) {
-		c = uart0_getc();
+		c = uart_getc();
 		// \e
 		if (c == 27) {
 			enum ANSI_ESC key = decode_ansi_escape();
@@ -210,7 +209,7 @@ void shell_main()
 				cmd_buffer[--cmd_idx] = '\0';
 			break;
 			case ANSI_ESC_UNKNOWN:
-				uart0_flush();
+				uart_flush();
 			break;
 			}
 		} else if (c == 3) { // CTRL-C

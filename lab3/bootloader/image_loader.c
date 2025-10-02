@@ -1,5 +1,5 @@
 #include "image_loader.h"
-#include "uart0.h"
+#include "uart.h"
 #include "string.h"
 #include "mailbox.h"
 #include "shell.h"
@@ -17,7 +17,7 @@ static uint32_t get_u32_little_endian()
 	int cnt = 0;
 
 	while (cnt < sizeof(uint32_t)) {
-		data[cnt++] = (unsigned char)uart0_getraw();
+		data[cnt++] = (unsigned char)uart_getraw();
 	}
 
 	return (uint32_t)data[0] |
@@ -32,7 +32,7 @@ static int32_t get_int_little_endian()
 	int cnt = 0;
 
 	while (cnt < sizeof(int32_t)) {
-		data[cnt++] = (unsigned char)uart0_getraw();
+		data[cnt++] = (unsigned char)uart_getraw();
 	}
 
 	return (int32_t)data[0] |
@@ -129,7 +129,7 @@ void start_loading_kernel(uint64_t start_addr,
 	printf("\rPlease send kernel image from UART now...\n");
 
 	for (int i = 0; i < size; i++) {
-		char b = uart0_getraw();
+		char b = uart_getraw();
 		*(kernel + i) = b;
 		img_checksum += (int)b;
 	}

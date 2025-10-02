@@ -32,6 +32,8 @@ _start:
 	stp x2, x3, [x0], #16
 	b 3b
 
+	
+4:	bl irq_enable
 	//Run main function
-4:	b main
-	b 4b
+5:	b main
+	b 5b

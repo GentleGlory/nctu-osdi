@@ -3,6 +3,9 @@
 #include "shell.h"
 #include "mailbox.h"
 #include "fb.h"
+#include "uart.h"
+#include "irq.h"
+#include "timer.h"
 
 void print_board_info(void)
 {
@@ -19,7 +22,9 @@ void print_board_info(void)
 
 void main(void)
 {
-	uart0_init();
+	uart_init(UART_TYPE_UART0);
+	
+	local_timer_init();
 
 	printf("\rFrank OS init\n");
 	print_board_info();
@@ -27,7 +32,7 @@ void main(void)
 	if (fb_init() == 0)
 		fb_draw_splash_image();
 
-	uart0_flush();
+	uart_flush();
 
 	shell_main();
 

@@ -1,6 +1,5 @@
-#include "uart0.h"
+#include "uart.h"
 #include "string.h"
-
 
 static void vprintf(const char* fmt,__builtin_va_list args);
 
@@ -149,47 +148,45 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 			if ((*fmt) == '\0') {
 				break;
 			} else if((*fmt) == '%') {
-				uart0_putc('%');
+				uart_putc('%');
 				fmt ++;
 			} else if((*fmt) == 'c') {
 				char c = __builtin_va_arg(args, int);
-				char temp[32] ={0};
-				lld_to_str(c,temp);
-				uart0_puts(temp);
-				fmt ++;	
+				uart_putc(c);
+				fmt ++;
 			} else if((*fmt) == 'd') {
 				int i = __builtin_va_arg(args, int);
 				char temp[32] ={0};
 				lld_to_str(i,temp);
-				uart0_puts(temp);
+				uart_puts(temp);
 				fmt ++;	
 			} else if((*fmt) == 's') {
 				char* s = __builtin_va_arg(args, char*);
-				uart0_puts(s);
+				uart_puts(s);
 				fmt++;
 			} else if((*fmt) == 'f') {
 				float f = __builtin_va_arg(args, double);
 				char temp[32] ={0};
 				double_to_str(f,6,temp);
-				uart0_puts(temp);
+				uart_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'u') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_str(u,temp);
-				uart0_puts(temp);
+				uart_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'x') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_hex_str(u,temp, 0);
-				uart0_puts(temp);
+				uart_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'X') {
 				unsigned int u = __builtin_va_arg(args, unsigned int);
 				char temp[32] ={0};
 				llu_to_hex_str(u,temp, 1);
-				uart0_puts(temp);
+				uart_puts(temp);
 				fmt++;
 			} else if((*fmt) == 'l') {
 				fmt++;
@@ -201,37 +198,37 @@ static void vprintf(const char* fmt,__builtin_va_list args)
 						long long l = __builtin_va_arg(args, long long);
 						char temp[64] ={0};	
 						lld_to_str(l,temp);
-						uart0_puts(temp);
+						uart_puts(temp);
 						fmt ++;	
 					} else if((*fmt) == 'u') {
 						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
 						char temp[64] ={0};
 						llu_to_str(llu,temp);
-						uart0_puts(temp);
+						uart_puts(temp);
 						fmt++;
 					} else if ((*fmt) == 'x') {
 						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
 						char temp[64] ={0};
 						llu_to_hex_str(llu,temp, 0);
-						uart0_puts(temp);
+						uart_puts(temp);
 						fmt++;
 					} else if ((*fmt) == 'X') {
 						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
 						char temp[64] ={0};
 						llu_to_hex_str(llu,temp, 1);
-						uart0_puts(temp);
+						uart_puts(temp);
 						fmt++;
 					}
 				} else if((*fmt) == 'f') {
 					double d = __builtin_va_arg(args, double);
 					char temp[64] ={0};
 					double_to_str(d,15,temp);
-					uart0_puts(temp);
+					uart_puts(temp);
 					fmt++;
 				}
 			}
 		} else {
-			uart0_putc((*fmt));
+			uart_putc((*fmt));
 			fmt++;
 		}
 	}
@@ -422,21 +419,21 @@ static void read_input_line(char* buffer, int max_len)
 	char c;
 
 	while (i < max_len - 1) {
-		c = uart0_getc();
+		c = uart_getc();
 
 		if (c == '\r' || c == '\n') {
-			uart0_putc('\n');
+			uart_putc('\n');
 			break;
 		} else if (c == '\b' || c == 127) {
 			if (i > 0) {
 				i--;
-				uart0_putc('\b');
-				uart0_putc(' ');
-				uart0_putc('\b');
+				uart_putc('\b');
+				uart_putc(' ');
+				uart_putc('\b');
 			}
 		} else if (c >= 32 && c <= 126) {
 			buffer[i] = c;
-			uart0_putc(c);
+			uart_putc(c);
 			i++;
 		}
 	}
