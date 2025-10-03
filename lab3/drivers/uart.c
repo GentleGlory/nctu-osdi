@@ -62,16 +62,12 @@ void uart_putc(unsigned char c)
 {
 	if (uart_instance[cur_uart_type].putc)
 		uart_instance[cur_uart_type].putc(c);
-
-	//uart0_putc(c);
 }
 
 void uart_puts(const char *s)
 {
 	if (uart_instance[cur_uart_type].puts)
 		uart_instance[cur_uart_type].puts(s);
-
-	//uart0_puts(s);
 }
 
 void uart_flush()

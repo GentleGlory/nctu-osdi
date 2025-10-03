@@ -3,8 +3,8 @@
 
 #include "core.h"
 
-#define CURRENT_EL		2
-#define LOWER_EL		1
+#define CURRENT_EL		1
+#define LOWER_EL		0
 
 #define SYNC_INVALID_CURRENT_ELt		0
 #define IRQ_INVALID_CURRENT_ELt			1
