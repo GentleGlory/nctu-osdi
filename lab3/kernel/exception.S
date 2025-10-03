@@ -44,10 +44,10 @@
 	// Assembly macro to define kernel exception handlers
 	.macro DEFINE_LOWER_EL_EXCEPTION_HANDLERS
 		el\()LOWER_EL\()t_64_sync:
-			handle_invalid_entry	SYNC_INVALID_LOWER_EL_64
+			b sync_exc_handler
 
 		el\()LOWER_EL\()t_64_irq:
-			handle_invalid_entry	IRQ_INVALID_LOWER_EL_64
+			b irq_exc_handler
 
 		el\()LOWER_EL\()t_64_fiq:
 			handle_invalid_entry	FIQ_INVALID_LOWER_EL_64

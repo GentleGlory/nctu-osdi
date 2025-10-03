@@ -2,6 +2,7 @@
 
 #define EL2_SP  _start
 #define EL1_SP  0x60000
+#define EL0_SP  0x40000
 
 .section ".text"
 .align	3
@@ -56,8 +57,26 @@ el1_start:
 	ldr x0, =exception_table
 	msr vbar_el1, x0
 
-	bl irq_enable
+	mrs x1, spsr_el1
+	ldr x2, =SPSR_EL1_DAIF_MASK
+	and x1, x1, x2
+	ldr x2, =SPSR_EL1_DAIF_CLEAR_ALL
+	orr x1, x1, x2
+
+	ldr x2, =SPSR_EL1_EL_MASK
+	and x1, x1, x2
+	ldr x2, =SPSR_EL1_EL0
+	orr x1, x1, x2
+	msr spsr_el1, x1
+
+	adr x1, el0_start
+	msr elr_el1, x1
+	eret
+	
+el0_start:
+	//Setting sp
+	ldr x0, =EL0_SP
+	mov sp, x0
 	//Run main function
 5:	b main
 	b 5b
-	

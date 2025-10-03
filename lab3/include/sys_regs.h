@@ -23,4 +23,9 @@
 
 #define CPACR_EL1_FPEN		(0b11 << 20)
 
+#define SPSR_EL1_DAIF_MASK		(~(0b1111 << 6))
+#define SPSR_EL1_DAIF_CLEAR_ALL	(0b0000 << 6)
+#define SPSR_EL1_EL_MASK		(~(0b1111 << 0))	
+#define SPSR_EL1_EL0			(0b0000 << 0)
+
 #endif
