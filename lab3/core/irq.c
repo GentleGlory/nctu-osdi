@@ -33,6 +33,23 @@ static void irq_uart0_handler()
 	uart_handle_irq(UART_TYPE_UART0);
 }
 
+//elective 3 Use a long delay to simulate bottom half of ISR. 
+//Compare the difference between enabling and not enabling interrupt after top half of ISR.
+static void irq_long_delay_test()
+{
+	printf("\rIn irq_long_delay_test\n");
+	irq_enable();
+	uint32_t cnt = 0;
+	const uint32_t limit = 8000000;
+	
+	while (cnt < limit) {
+		cnt ++;
+		asm volatile("nop");
+	}
+
+	printf("\rOut irq_long_delay_test\n");
+}
+
 static void irq_pending_1_handler()
 {
 	uint32_t pending_1 = readl(IRQ_PENDING_1_REG);
@@ -51,6 +68,7 @@ void irq_handler()
 	
 	if (core0_irq_src & CORE0_IRQ_SRC_CNTPNSIRQ) {
 		irq_core_timer_handler();
+		//irq_long_delay_test();
 	} else if (core0_irq_src & CORE0_IRQ_SRC_LOCAL_TIMER) {
 		irq_local_timer_handler();
 	} else if (basic_pending & IRQ_BASIC_PENDING_UART) {
