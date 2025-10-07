@@ -123,6 +123,7 @@
 			kernel_entry
 			mrs x0, esr_el\()CURRENT_EL
 			mrs x1, elr_el\()CURRENT_EL
+			ldr x2, [sp, #16 * 4]	// Load saved x8 (syscall number)
 			bl  sync_exc_router
 			kernel_exit
 	.endm

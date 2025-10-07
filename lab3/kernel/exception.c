@@ -1,7 +1,7 @@
 #include "exception.h"
 #include "string.h"
 #include "irq.h"
-
+#include "system_call.h"
 
 void show_exception_status(uint64_t type, uint64_t esr, uint64_t elr)
 {
@@ -17,22 +17,17 @@ void not_implemented()
 	while (1);
 }
 
-void sync_exc_router(uint64_t esr, uint64_t elr) 
+void sync_exc_router(uint64_t esr, uint64_t elr, uint64_t syscall_num)
 {
 	printf("\rIn sync_exc_router, esr:0x%llx, elr:0x%llx\n",
 			esr, elr);
 
-	int ec = (esr >> 26) & 0b111111;
-	int iss = esr & 0x1FFFFFF;    
+	int ec = EXC_ESR_EC(esr);
 
-	switch(iss) {
-	case 1:
-		printf("\rException return address 0x%x\n", elr);
-		printf("\rException class (EC) 0x%x\n", ec);
-		printf("\rInstruction specific syndrome (ISS) 0x%x\n", iss);
-	break;
-	default:
-		printf("\rUnhandeled iss:%x\n",iss);
+	if (ec == EXC_ESR_EC_SVC_ARM64) {
+		system_call_handler(syscall_num, esr, elr);
+	} else {
+		printf("\rUnhandeled ec:%x\n", ec);
 	}
 }
 

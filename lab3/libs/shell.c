@@ -7,6 +7,7 @@
 #include "mailbox.h"
 #include "timer.h"
 #include "irq.h"
+#include "system_call.h"
 
 #ifdef BOOTLOADER
 #include "image_loader.h"
@@ -108,11 +109,7 @@ static void read_text_cmd(void)
 
 static void timestamp_cmd(void)
 {
-	struct rational r = {0, 0};
-	
-	r = get_time_tick();
-
-	printf("\r[%lld.%lld]\n",r.num, r.den);
+	system_call_run(SYS_CALL_TIME_STAMP);
 }
 
 static void reboot_cmd(void)
@@ -122,18 +119,12 @@ static void reboot_cmd(void)
 
 static void exc_cmd()
 {
-	asm volatile(
-		"svc #1 "
-		:		// No Output operands
-		:		// No input operands
-		:		// No clobbers
-	);
+	system_call_run(SYS_CALL_TEST);
 }
 
 static void irq_cmd()
 {
-	core_timer_enable();
-	system_timer_init();
+	system_call_run(SYS_CALL_IRQ_TEST);
 }
 
 #ifdef BOOTLOADER

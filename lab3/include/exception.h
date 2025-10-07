@@ -26,4 +26,12 @@
 #define FIQ_INVALID_LOWER_EL_32			14
 #define ERROR_INVALID_LOWER_EL_32		15
 
+#ifndef __ASM__
+
+#define EXC_ESR_EC_MASK			GENMASK(31, 26)
+#define EXC_ESR_EC(esr)			(((esr) & GENMASK(31, 26)) >> 26)
+#define   EXC_ESR_EC_SVC_ARM64	(0b010101)
+
+#endif
+
 #endif
