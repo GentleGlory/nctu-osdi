@@ -114,7 +114,7 @@ static void timestamp_cmd(void)
 
 static void reboot_cmd(void)
 {
-	reset(10);
+	power_reset(10);
 }
 
 static void exc_cmd()

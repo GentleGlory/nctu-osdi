@@ -8,15 +8,15 @@ static void system_call_time_stamp_handler()
 {
 	struct rational r = {0, 0};
 	
-	r = get_time_tick();
+	r = time_get_time_tick();
 	
 	printf("\r[%lld.%lld]\n",r.num, r.den);
 }
 
 static void system_call_irq_test_handler()
 {
-	core_timer_enable();
-	system_timer_init();
+	timer_core_timer_enable();
+	timer_system_timer_init();
 }
 
 void system_call_run(uint32_t sys_call_num)

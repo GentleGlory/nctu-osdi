@@ -8,7 +8,7 @@
 #define PM_RSTC_REG 0x3F10001c
 #define PM_WDOG_REG 0x3F100024
 
-void reset(int tick);
-void cancel_reset(void);
+void power_reset(int tick);
+void power_cancel_reset(void);
 
 #endif 

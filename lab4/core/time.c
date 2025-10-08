@@ -3,13 +3,13 @@
 #include "string.h"
 
 
-struct rational get_time_tick()
+struct rational time_get_time_tick()
 {
 	struct rational ret = {0,0};
 	uint64_t freq = read_sys_reg(CNTFRQ_EL0);
 	uint64_t tick = read_sys_reg(CNTPCT_EL0);
 
-	ret = get_rational(tick, freq);
+	ret = math_get_rational(tick, freq);
 	return ret;
 }
 

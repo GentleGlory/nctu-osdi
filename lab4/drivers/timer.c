@@ -7,7 +7,7 @@ static uint64_t core_timer_jiffies = 0;
 //static uint64_t local_timer_jiffies = 0;
 static uint64_t system_timer_jiffies = 0;
 
-void core_timer_enable()
+void timer_core_timer_enable()
 {
 	asm volatile (
 		"mov x0, #1 \n"
@@ -23,7 +23,7 @@ void core_timer_enable()
 	);
 }
 
-void core_timer_reload()
+void timer_core_timer_reload()
 {
 	asm volatile (
 		"mov x0, %0 \n"
@@ -36,7 +36,7 @@ void core_timer_reload()
 	printf("\rCore timer jiffies:%llu\n", ++core_timer_jiffies);
 }
 
-void local_timer_init()
+void timer_local_timer_init()
 {
 	uint32_t flag = 0x30000000; // enable timer and interrupt.
 	uint32_t reload = 12500000;
@@ -44,7 +44,7 @@ void local_timer_init()
 	writel(LOCAL_TIMER_CTRL_REG, flag | reload);
 }
 
-void local_timer_reload()
+void timer_local_timer_reload()
 {
 	writel(LOCAL_TIMER_IRQ_CLR_REG, 0xc0000000); // clear interrupt and reload.
 	//printf("\rLocal timer jiffies:%llu\n", ++local_timer_jiffies);
@@ -52,7 +52,7 @@ void local_timer_reload()
 	uart_do_rx();
 }
 
-void system_timer_init()
+void timer_system_timer_init()
 {
 	uint32_t val = 0;
 	val = readl(SYSTEM_TIMER_CLO_REG);
@@ -60,7 +60,7 @@ void system_timer_init()
 	irq_enable_arm_peri(ARM_PERI_IRQ_NUM_SYSTEM_TIMER_1);
 }
 
-void system_timer_reload()
+void timer_system_timer_reload()
 {
 	unsigned int val = 0;
 	val = readl(SYSTEM_TIMER_CLO_REG);

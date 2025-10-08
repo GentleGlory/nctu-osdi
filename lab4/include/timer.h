@@ -11,13 +11,13 @@
 #define SYSTEM_TIMER_CLO_REG 		(MMIO_BASE + 0x3004)
 
 
-void core_timer_enable();
-void core_timer_reload();
+void timer_core_timer_enable();
+void timer_core_timer_reload();
 
-void local_timer_init();
-void local_timer_reload();
+void timer_local_timer_init();
+void timer_local_timer_reload();
 
-void system_timer_init();
-void system_timer_reload();
+void timer_system_timer_init();
+void timer_system_timer_reload();
 
 #endif

@@ -4,7 +4,7 @@
 #include "core.h"
 #include "math.h"
 
-struct rational get_time_tick();
+struct rational time_get_time_tick();
 
 
 #endif

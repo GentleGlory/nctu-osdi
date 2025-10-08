@@ -2,7 +2,7 @@
 #include "core.h"
 
 
-struct rational get_rational(int64_t n, int64_t d) {
+struct rational math_get_rational(int64_t n, int64_t d) {
 	struct rational ret = {0, 0};
 	if (d == 0) return ret;  // invalid
 

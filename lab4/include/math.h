@@ -8,6 +8,6 @@ struct rational {
 	int64_t		den;
 };
 
-struct rational get_rational(int64_t n, int64_t d);
+struct rational math_get_rational(int64_t n, int64_t d);
 
 #endif

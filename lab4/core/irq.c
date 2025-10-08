@@ -15,17 +15,17 @@ void irq_disable()
 
 static void irq_core_timer_handler()
 {
-	core_timer_reload();
+	timer_core_timer_reload();
 }
 
 static void irq_local_timer_handler()
 {
-	local_timer_reload();
+	timer_local_timer_reload();
 }
 
 static void irq_system_timer_1_handler()
 {
-	system_timer_reload();
+	timer_system_timer_reload();
 }
 
 static void irq_uart0_handler()

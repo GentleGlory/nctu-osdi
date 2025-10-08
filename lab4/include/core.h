@@ -28,6 +28,12 @@ typedef unsigned char byte;
 #define NULL ((void*)0)
 #endif
 
+#define offsetof(type, member)  __builtin_offsetof(type, member)
+
+#define container_of(ptr, type, member) ({						\
+	const typeof(((type *)0)->member) *__mptr = (ptr);			\
+	(type *)((char *)__mptr - offsetof(type, member)); })
+
 static inline void writel(uint64_t address, uint32_t val)
 {
 	//*(volatile u32*)(reg) = val;

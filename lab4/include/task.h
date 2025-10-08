@@ -3,6 +3,7 @@
 
 #ifndef __LINKER__
 #include "core.h"
+#include "list.h"
 #endif
 
 #define TASK_POOL_SIZE	64
@@ -42,16 +43,17 @@ struct task {
 	struct cpu_context	cpu_context;
 
 	int					task_id;
-	enum task_state		state;	
+	enum task_state		state;
+	struct list_head	list;
 };
 
 extern struct task task_pool[TASK_POOL_SIZE];
 
 extern struct task idle_task;
 
-void init_task();
+void task_init();
 
-void privilege_task_create(void(*func)());
+void task_privilege_task_create(void(*func)());
 
 #endif
 

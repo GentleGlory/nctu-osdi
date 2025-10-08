@@ -1,6 +1,7 @@
 #include "task.h"
 #include "string.h"
 #include "sys_regs.h"
+#include "scheduler.h"
 
 struct task task_pool[TASK_POOL_SIZE];
 struct task idle_task;
@@ -9,7 +10,7 @@ extern unsigned char __kernel_stack_start;
 extern unsigned char __user_stack_start;
 
 
-void init_task()
+void task_init()
 {
 	// Initialize idle task
 	idle_task.task_id = -1;
@@ -20,10 +21,11 @@ void init_task()
 	for (int i = 0; i < TASK_POOL_SIZE; i++) {
 		task_pool[i].task_id = i;
 		task_pool[i].state = EXIT;
+		INIT_LIST_HEAD(&task_pool[i].list);
 	}
 }
 
-void privilege_task_create(void(*func)())
+void task_privilege_task_create(void(*func)())
 {
 	unsigned char *sp = NULL;
 	unsigned char *kernel_reserved_sp = &__kernel_stack_start;
@@ -42,6 +44,7 @@ void privilege_task_create(void(*func)())
 
 			// Mark task as ready to run
 			task_pool[i].state = RUNNING;
+			scheduler_add_task_to_queue(&task_pool[i]);
 			break;
 		}
 	}

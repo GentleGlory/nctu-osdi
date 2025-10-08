@@ -5,9 +5,6 @@
 
 #define __ASM_OFFSETS_C__
 
-/* Define offsetof macro manually since we use -nostdinc */
-#define offsetof(TYPE, MEMBER) ((unsigned long)&((TYPE *)0)->MEMBER)
-
 #include "task.h"
 
 /* Define macro to emit offset definitions */

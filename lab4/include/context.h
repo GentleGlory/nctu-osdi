@@ -10,7 +10,7 @@ extern void switch_to(struct task *prev, struct task *next);
 #define current get_current();
 
 
-
+void context_init();
 void context_switch(struct task *next);
 
 #endif
