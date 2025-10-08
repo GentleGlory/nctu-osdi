@@ -56,7 +56,7 @@ el1_start:
 	//Setting exception table
 	ldr x0, =exception_table
 	msr vbar_el1, x0
-
+#if 0
 	mrs x1, spsr_el1
 	ldr x2, =SPSR_EL1_DAIF_MASK
 	and x1, x1, x2
@@ -78,5 +78,6 @@ el0_start:
 	ldr x0, =EL0_SP
 	mov sp, x0
 	//Run main function
+#endif
 5:	b main
 	b 5b

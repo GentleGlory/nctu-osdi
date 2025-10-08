@@ -575,3 +575,13 @@ end:
 	__builtin_va_end(args);
 	return matched;
 }
+
+void memset(void *s, int c, unsigned int n)
+{
+	unsigned char *ptr = (unsigned char *)s;
+	unsigned char value = (unsigned char)c;
+
+	for (unsigned int i = 0; i < n; i++) {
+		ptr[i] = value;
+	}
+}

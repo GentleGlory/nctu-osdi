@@ -17,4 +17,6 @@ void printf(const char* fmt,...);
 
 int simple_scanf(const char* fmt,...);
 
+void memset(void *s, int c, unsigned int n);
+
 #endif

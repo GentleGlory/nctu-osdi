@@ -35,10 +35,38 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -nostartfiles")
 # Enable languages after setting toolchain
 enable_language(C ASM)
 
-# Find source files
+# Generate asm-offsets.h
+set(ASM_OFFSETS_C "${CMAKE_CURRENT_SOURCE_DIR}/kernel/asm-offsets.c")
+set(ASM_OFFSETS_S "${CMAKE_CURRENT_BINARY_DIR}/asm-offsets.s")
+set(ASM_OFFSETS_H "${CMAKE_CURRENT_BINARY_DIR}/include/asm-offsets.h")
+
+# Create output directory for generated headers
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
+
+# Step 1: Compile asm-offsets.c to assembly
+add_custom_command(
+	OUTPUT ${ASM_OFFSETS_S}
+	COMMAND ${CMAKE_C_COMPILER} -S ${ASM_OFFSETS_C} -o ${ASM_OFFSETS_S} -I${CMAKE_CURRENT_SOURCE_DIR}/include -Wall -ffreestanding -nostdinc -nostdlib -O2
+	DEPENDS ${ASM_OFFSETS_C}
+	COMMENT "Generating asm-offsets.s"
+)
+
+# Step 2: Extract #define from assembly and create header using script
+add_custom_command(
+	OUTPUT ${ASM_OFFSETS_H}
+	COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_asm_offsets.sh ${ASM_OFFSETS_S} ${ASM_OFFSETS_H}
+	DEPENDS ${ASM_OFFSETS_S}
+	COMMENT "Generating asm-offsets.h"
+)
+
+# Create a custom target for asm-offsets.h
+add_custom_target(generate_asm_offsets DEPENDS ${ASM_OFFSETS_H})
+
+# Find source files (exclude asm-offsets.c from kernel sources)
 file(GLOB COMMON_C_SOURCES "core/*.c" "drivers/*.c" "libs/*.c")
 
 file(GLOB KERNEL_C_SOURCES "kernel/*.c")
+list(REMOVE_ITEM KERNEL_C_SOURCES "${ASM_OFFSETS_C}")
 file(GLOB KERNEL_ASM_SOURCES "kernel/*.S")
 
 file(GLOB BOOTLOADER_C_SOURCES "bootloader/*.c")
@@ -69,15 +97,33 @@ add_custom_command(
 )
 
 # kernel is named kernel_real.img
+# Preprocess kernel linker script
+set(KERNEL_LINKER_SCRIPT_IN "${CMAKE_CURRENT_SOURCE_DIR}/kernel/linker.ld.in")
+set(KERNEL_LINKER_SCRIPT_OUT "${CMAKE_CURRENT_BINARY_DIR}/kernel_linker.ld")
+
+add_custom_command(
+	OUTPUT ${KERNEL_LINKER_SCRIPT_OUT}
+	COMMAND ${CMAKE_C_COMPILER} -E -P -x c -I${CMAKE_CURRENT_SOURCE_DIR}/include ${KERNEL_LINKER_SCRIPT_IN} -o ${KERNEL_LINKER_SCRIPT_OUT}
+	DEPENDS ${KERNEL_LINKER_SCRIPT_IN}
+	COMMENT "Preprocessing kernel linker script"
+)
+add_custom_target(kernel_linker_script DEPENDS ${KERNEL_LINKER_SCRIPT_OUT})
+
 # Create kernel executable (includes common sources and kernel sources)
 add_executable(kernel_real.elf ${COMMON_C_SOURCES} ${KERNEL_C_SOURCES} ${KERNEL_ASM_SOURCES})
 
-# Add include directories
-target_include_directories(kernel_real.elf PRIVATE include)
+# Add include directories (include generated headers)
+target_include_directories(kernel_real.elf PRIVATE
+	include
+	${CMAKE_CURRENT_BINARY_DIR}/include
+)
+
+# Add dependencies on preprocessed linker script and generated asm-offsets.h
+add_dependencies(kernel_real.elf kernel_linker_script generate_asm_offsets)
 
 # Set linker script
 set_target_properties(kernel_real.elf PROPERTIES
-    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/kernel/linker.ld"
+	LINK_FLAGS "-T ${KERNEL_LINKER_SCRIPT_OUT}"
 )
 
 # Custom command to create binary image
