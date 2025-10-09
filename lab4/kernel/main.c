@@ -27,7 +27,7 @@ void task_1()
 	while(1) {
 		printf("\r1...\n");
 		scheduler_do_schedule();
-	}	
+	}
 }
 
 void task_2()
@@ -65,6 +65,9 @@ void main(void)
 	task_privilege_task_create(task_1);
 	task_privilege_task_create(task_2);
 	task_privilege_task_create(task_3);
+	
+	timer_core_timer_enable();
+	irq_enable();
 	
 	//shell_main();
 	while(1) {

@@ -12,7 +12,7 @@ void timer_core_timer_enable()
 	asm volatile (
 		"mov x0, #1 \n"
 		"msr cntp_ctl_el0, x0 \n"
-		"mov x0, %0 \n"
+		"ldr x0, =%0 \n"
 		"msr cntp_tval_el0, x0 \n"
 		"mov x0, #2 \n"
 		"ldr x1, =%1 \n"
@@ -26,7 +26,7 @@ void timer_core_timer_enable()
 void timer_core_timer_reload()
 {
 	asm volatile (
-		"mov x0, %0 \n"
+		"ldr x0, =%0 \n"
 		"msr cntp_tval_el0, x0 \n"
 		:
 		: "i" (CORE_TIMER_EXPIRE_PERIOD)

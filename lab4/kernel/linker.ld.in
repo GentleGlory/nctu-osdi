@@ -29,8 +29,9 @@ SECTIONS
 
 	. = ALIGN(16);
 	__user_stack_start = .;
-	. = ALIGN(USER_STACK_RESERVED_SIZE);
+	. = . + USER_STACK_RESERVED_SIZE;
 	. = ALIGN(16);
 	__kernel_stack_start = .;
-	. = ALIGN(KERNEL_STACK_RESERVED_SIZE);
+	. = . + KERNEL_STACK_RESERVED_SIZE;
+	. = ALIGN(16);	
 }

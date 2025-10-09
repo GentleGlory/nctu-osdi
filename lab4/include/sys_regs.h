@@ -16,8 +16,7 @@
 
 
 
-#define SPSR_EL2_DAIF_DISABLE	(7 << 6)
-
+#define SPSR_EL2_DAIF_DISABLE		(7 << 6)
 
 #define SPSR_EL2_M_MASK	(~(0b11111))
 #define SPSR_EL2_M_EL1H	(0b0101)

@@ -28,9 +28,11 @@
 
 #ifndef __ASM__
 
-#define EXC_ESR_EC_MASK			GENMASK(31, 26)
-#define EXC_ESR_EC(esr)			(((esr) & GENMASK(31, 26)) >> 26)
-#define   EXC_ESR_EC_SVC_ARM64	(0b010101)
+#define EXC_ESR_EC_MASK				GENMASK(31, 26)
+#define EXC_ESR_EC(esr)				(((esr) & GENMASK(31, 26)) >> 26)
+#define   EXC_ESR_EC_SVC_ARM64		(0b010101)
+#define   EXC_ESR_EC_DATA_ABORT_LOWER	(0b100100)	// Data Abort from a lower Exception level
+#define   EXC_ESR_EC_DATA_ABORT_SAME	(0b100101)	// Data Abort from the same Exception level
 
 #endif
 

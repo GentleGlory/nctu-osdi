@@ -15,6 +15,8 @@
 #define USER_STACK_SIZE			0x1000
 #define USER_STACK_RESERVED_SIZE	(USER_STACK_SIZE * TASK_POOL_SIZE)
 
+#define DEFAULT_EPOCH		10
+
 #ifndef __LINKER__
 
 enum task_state {
@@ -44,8 +46,11 @@ struct task {
 
 	int					task_id;
 	enum task_state		state;
+	int					need_reschedule;
+	int					epoch;
+	uint64_t			__padding;		// Padding to align list to 16 bytes
 	struct list_head	list;
-};
+} __attribute__((aligned(16)));
 
 extern struct task task_pool[TASK_POOL_SIZE];
 

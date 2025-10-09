@@ -15,6 +15,7 @@ void task_init()
 	// Initialize idle task
 	idle_task.task_id = -1;
 	idle_task.state = RUNNING;
+	idle_task.need_reschedule = 1;
 	memset(&idle_task.cpu_context, 0, sizeof(struct cpu_context));
 
 	// Initialize task pool
@@ -44,6 +45,9 @@ void task_privilege_task_create(void(*func)())
 
 			// Mark task as ready to run
 			task_pool[i].state = RUNNING;
+			task_pool[i].need_reschedule = 0;
+			task_pool[i].epoch = DEFAULT_EPOCH;
+			
 			scheduler_add_task_to_queue(&task_pool[i]);
 			break;
 		}
