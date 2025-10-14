@@ -48,7 +48,7 @@
 			b sync_exc_handler
 
 		el\()LOWER_EL\()t_64_irq:
-			b irq_exc_handler
+			b irq_exc_el\()LOWER_EL\()_handler
 
 		el\()LOWER_EL\()t_64_fiq:
 			handle_invalid_entry	FIQ_INVALID_LOWER_EL_64
@@ -171,6 +171,14 @@
 			kernel_exit
 	.endm
 
+	.macro DEFINE_LOW_LEVEL_IRQ_EXC_HANDLER
+		irq_exc_el\()LOWER_EL\()_handler:
+			kernel_entry
+			bl irq_exc_router
+			bl scheduler_do_schedule
+			kernel_exit
+	.endm
+
 .section ".text"
 .global exception_table
 
@@ -203,3 +211,5 @@ DEFINE_LOWER_EL_EXCEPTION_HANDLERS
 DEFINE_SYNC_EXC_HANDLER
 DEFINE_IRQ_EXC_HANDLER
 RET_TO_USER
+
+DEFINE_LOW_LEVEL_IRQ_EXC_HANDLER

@@ -55,8 +55,7 @@ void task_3()
 void task_user()
 {
 	while (1) {
-		printf("\rUser task...\n");
-		scheduler_user_task_do_schedule();
+		printf("\rUser task...\n");		
 	}
 }
 
