@@ -6,5 +6,5 @@
 void scheduler_update_task_epoch();
 void scheduler_do_schedule();
 void scheduler_add_task_to_queue(struct task * task);
-
+void scheduler_user_task_do_schedule();
 #endif

@@ -34,6 +34,8 @@
 #define   EXC_ESR_EC_DATA_ABORT_LOWER	(0b100100)	// Data Abort from a lower Exception level
 #define   EXC_ESR_EC_DATA_ABORT_SAME	(0b100101)	// Data Abort from the same Exception level
 
+extern void ret_to_user(void(*func)());
+
 #endif
 
 #endif

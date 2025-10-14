@@ -4,6 +4,10 @@
 #include "timer.h"
 #include "exception.h"
 
+#ifndef BOOTLOADE
+#include "scheduler.h"
+#endif
+
 static void system_call_time_stamp_handler()
 {
 	struct rational r = {0, 0};
@@ -33,6 +37,13 @@ void system_call_run(uint32_t sys_call_num)
 	);
 }
 
+void system_call_user_task_do_schedule()
+{
+#ifndef BOOTLOADER	
+	scheduler_do_schedule();
+#endif	
+}
+
 void system_call_handler(uint64_t syscall_num, uint64_t esr, uint64_t elr)
 {
 	switch (syscall_num) {
@@ -49,6 +60,9 @@ void system_call_handler(uint64_t syscall_num, uint64_t esr, uint64_t elr)
 		break;
 		case SYS_CALL_IRQ_TEST:
 			system_call_irq_test_handler();
+		break;
+		case SYS_CALL_SCHEDULE:
+			system_call_user_task_do_schedule();
 		break;
 		default:
 			printf("\rUnhandled system call num:%lld\n", syscall_num);

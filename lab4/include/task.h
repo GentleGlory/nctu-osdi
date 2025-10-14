@@ -48,7 +48,7 @@ struct task {
 	enum task_state		state;
 	int					need_reschedule;
 	int					epoch;
-	uint64_t			__padding;		// Padding to align list to 16 bytes
+	uint64_t			reserved_user_sp;
 	struct list_head	list;
 } __attribute__((aligned(16)));
 
@@ -59,6 +59,7 @@ extern struct task idle_task;
 void task_init();
 
 void task_privilege_task_create(void(*func)());
+void task_do_exec(void(*func)());
 
 #endif
 

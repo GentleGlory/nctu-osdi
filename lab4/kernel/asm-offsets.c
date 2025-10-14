@@ -34,6 +34,7 @@ int main(void)
 	DEFINE(TASK_CPU_CONTEXT, offsetof(struct task, cpu_context));
 	DEFINE(TASK_ID, offsetof(struct task, task_id));
 	DEFINE(TASK_STATE, offsetof(struct task, state));
+	DEFINE(RESERVED_USER_SP, offsetof(struct task, reserved_user_sp));
 	BLANK();
 
 	return 0;

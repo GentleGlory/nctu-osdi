@@ -3,6 +3,8 @@
 #include "scheduler.h"
 #include "context.h"
 #include "string.h"
+#include "system_call.h"
+#include "irq.h"
 
 LIST_HEAD(runnable_task_list);
 
@@ -26,6 +28,8 @@ void scheduler_do_schedule()
 			}
 			
 			context_switch(next);
+
+			irq_enable();
 		}
 	}	
 }
@@ -46,4 +50,9 @@ void scheduler_update_task_epoch()
 			cur->need_reschedule = 1;
 		}
 	}
+}
+
+void scheduler_user_task_do_schedule()
+{
+	system_call_run(SYS_CALL_SCHEDULE);
 }

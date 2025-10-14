@@ -14,7 +14,7 @@ switch_to:
 	mov x9, sp
 	str x9, [x0, #CPU_CONTEXT_SP]
 	str lr, [x0, #CPU_CONTEXT_PC]
-
+	
 	ldp x19, x20, [x1, #CPU_CONTEXT_X19]
 	ldp x21, x22, [x1, #CPU_CONTEXT_X21]
 	ldp x23, x24, [x1, #CPU_CONTEXT_X23]
@@ -24,6 +24,7 @@ switch_to:
 	ldr x9, [x1, #CPU_CONTEXT_SP]
 	mov sp, x9
 	ldr lr, [x1, #CPU_CONTEXT_PC]
+	
 	msr tpidr_el1, x1
 	ret
 

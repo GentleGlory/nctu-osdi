@@ -19,8 +19,8 @@ void not_implemented()
 
 void sync_exc_router(uint64_t esr, uint64_t elr, uint64_t syscall_num)
 {
-	printf("\rIn sync_exc_router, esr:0x%llx, elr:0x%llx\n",
-			esr, elr);
+	//printf("\rIn sync_exc_router, esr:0x%llx, elr:0x%llx\n",
+	//		esr, elr);
 
 	int ec = EXC_ESR_EC(esr);
 

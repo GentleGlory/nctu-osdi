@@ -22,9 +22,15 @@ void print_board_info(void)
 			vc_mem_addr, vc_mem_size);
 }
 
+void do_exec(void(*func)())
+{
+	task_do_exec(func);
+}
+
+
 void task_1()
 {
-	while(1) {
+	while (1) {
 		printf("\r1...\n");
 		scheduler_do_schedule();
 	}
@@ -32,7 +38,7 @@ void task_1()
 
 void task_2()
 {
-	while(1) {
+	while (1) {
 		printf("\r2...\n");
 		scheduler_do_schedule();
 	}
@@ -40,10 +46,24 @@ void task_2()
 
 void task_3()
 {
-	while(1) {
+	while (1) {
 		printf("\r3...\n");
 		scheduler_do_schedule();
 	}
+}
+
+void task_user()
+{
+	while (1) {
+		printf("\rUser task...\n");
+		scheduler_user_task_do_schedule();
+	}
+}
+
+void task_4()
+{
+	printf("\r4...\n");
+	do_exec(task_user);
 }
 
 void main(void)
@@ -65,7 +85,8 @@ void main(void)
 	task_privilege_task_create(task_1);
 	task_privilege_task_create(task_2);
 	task_privilege_task_create(task_3);
-	
+	task_privilege_task_create(task_4);
+
 	timer_core_timer_enable();
 	irq_enable();
 	
