@@ -59,18 +59,6 @@ void uart0_init()
 
 char uart0_getc()
 {
-#if 0
-	char c;
-	uint32_t val;
-	do {
-		val = readl(UART0_FR_REG);
-		asm volatile("nop");
-	} while ((val & UART0_FR_RXFE));
-
-	c = (char) readl(UART0_DR_REG);
-
-	return c == '\r' ? '\n' : c;
-#else
 	char c;
 
 	while (circular_buffer_empty(&rx_buffer)) {
@@ -80,20 +68,10 @@ char uart0_getc()
 	c = (char)circular_buffer_read(&rx_buffer);
 
 	return c == '\r' ? '\n' : c;
-#endif
 }
 
 void uart0_putc(unsigned char c)
 {
-#if 0
-	uint32_t val;
-	do {
-		val = readl(UART0_FR_REG);
-		asm volatile("nop");
-	} while ((val & UART0_FR_TXFF));
-
-	writel(UART0_DR_REG, c);
-#else
 	// Disable TX interrupt temporarily
 	uint32_t imsc = readl(UART0_IMSC_REG);
 	writel(UART0_IMSC_REG, imsc & ~UART0_IMSC_TXIM);
@@ -112,7 +90,6 @@ void uart0_putc(unsigned char c)
 	
 	// Re-enable TX interrupt
 	writel(UART0_IMSC_REG, imsc);
-#endif
 }
 
 void uart0_puts(const char *s)
@@ -134,18 +111,6 @@ void uart0_flush()
 
 char uart0_getraw()
 {
-#if 0	
-	char c;
-	uint32_t val;
-	do {
-		val = readl(UART0_FR_REG);
-		asm volatile("nop");
-	} while ((val & UART0_FR_RXFE));
-
-	c = (char) readl(UART0_DR_REG);
-
-	return c;
-#else
 	char c;
 	
 	while (circular_buffer_empty(&rx_buffer)) {
@@ -155,7 +120,6 @@ char uart0_getraw()
 	c = (char)circular_buffer_read(&rx_buffer);
 
 	return c;
-#endif
 }
 
 void uart0_do_rx()
@@ -189,4 +153,64 @@ void uart0_handle_irq()
 		// Clear TX interrupt
 		writel(UART0_ICR_REG, UART0_ICR_TXIC);
 	}
+}
+
+size_t uart0_read(char buf[], size_t size)
+{
+	char c;
+	size_t ret = 0;
+
+	while (ret < size && !circular_buffer_empty(&rx_buffer)) {
+		c = (char)circular_buffer_read(&rx_buffer);
+		c = c == '\r' ? '\n' : c;
+		buf[ret] = c;
+		ret ++;
+	}
+
+	return ret;
+}
+
+size_t uart0_write(const char buf[], size_t size)
+{
+	size_t ret = 0;
+	char c;
+
+	// Disable TX interrupt temporarily
+	uint32_t imsc = readl(UART0_IMSC_REG);
+	writel(UART0_IMSC_REG, imsc & ~UART0_IMSC_TXIM);
+
+	while (ret < size) {
+		// If buffer is full, try to drain it to TX FIFO first
+		if (circular_buffer_full(&tx_buffer)) {
+			// Try to move data from buffer to TX FIFO if there's space
+			while (!circular_buffer_empty(&tx_buffer) &&
+				   !(readl(UART0_FR_REG) & UART0_FR_TXFF)) {
+				c = (char)circular_buffer_read(&tx_buffer);
+				writel(UART0_DR_REG, c);
+			}
+
+			// If buffer is still full, we can't proceed
+			if (circular_buffer_full(&tx_buffer)) {
+				break;
+			}
+		}
+
+		// Add character to buffer
+		circular_buffer_write(&tx_buffer, buf[ret]);
+
+		// If TX FIFO has space, kickstart transmission
+		if (!(readl(UART0_FR_REG) & UART0_FR_TXFF)) {
+			if (!circular_buffer_empty(&tx_buffer)) {
+				c = (char)circular_buffer_read(&tx_buffer);
+				writel(UART0_DR_REG, c);
+			}
+		}
+
+		ret++;
+	}
+
+	// Re-enable TX interrupt
+	writel(UART0_IMSC_REG, imsc);
+
+	return ret;
 }

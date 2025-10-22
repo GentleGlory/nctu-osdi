@@ -66,4 +66,6 @@ void uart0_flush();
 char uart0_getraw();
 void uart0_handle_irq();
 void uart0_do_rx();
+size_t uart0_read(char buf[], size_t size);
+size_t uart0_write(const char buf[], size_t size);
 #endif

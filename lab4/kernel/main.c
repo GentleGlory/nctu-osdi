@@ -9,6 +9,7 @@
 #include "task.h"
 #include "context.h"
 #include "scheduler.h"
+#include "delay.h"
 
 void print_board_info(void)
 {
@@ -32,7 +33,7 @@ void task_1()
 {
 	while (1) {
 		printf("\r1...\n");
-		scheduler_do_schedule();
+		delay(1000);
 	}
 }
 
@@ -40,7 +41,7 @@ void task_2()
 {
 	while (1) {
 		printf("\r2...\n");
-		scheduler_do_schedule();
+		delay(1000);
 	}
 }
 
@@ -48,14 +49,15 @@ void task_3()
 {
 	while (1) {
 		printf("\r3...\n");
-		scheduler_do_schedule();
+		delay(2000);
 	}
 }
 
 void task_user()
 {
 	while (1) {
-		printf("\rUser task...\n");		
+		uprintf("\rUser task...\n");
+		udelay(1000);
 	}
 }
 
@@ -65,12 +67,18 @@ void task_4()
 	do_exec(task_user);
 }
 
+void task_5()
+{
+	printf("\r5...\n");
+	do_exec(shell_main);
+}
+
 void main(void)
 {
-	//uart_init(UART_TYPE_UART0);
-	uart_init(UART_TYPE_MINI_UART);
+	uart_init(UART_TYPE_UART0);
+	//uart_init(UART_TYPE_MINI_UART);
 	
-	//local_timer_init();
+	timer_local_timer_init();
 	print_board_info();
 
 	if (fb_init() == 0)
@@ -79,19 +87,22 @@ void main(void)
 	uart_flush();
 
 	task_init();
+	scheduler_init();
 	context_init();
 
-	task_privilege_task_create(task_1);
-	task_privilege_task_create(task_2);
-	task_privilege_task_create(task_3);
-	task_privilege_task_create(task_4);
+	task_privilege_task_create(task_1, PRIORITY_LOW);
+	task_privilege_task_create(task_2, PRIORITY_HIGH);
+	task_privilege_task_create(task_3, PRIORITY_NORMAL);
+	task_privilege_task_create(task_4, PRIORITY_NORMAL);
+	task_privilege_task_create(task_5, PRIORITY_NORMAL);
 
 	timer_core_timer_enable();
 	irq_enable();
 	
-	//shell_main();
 	while(1) {
 
 		scheduler_do_schedule();
+
+		asm("wfi");
 	}
 }

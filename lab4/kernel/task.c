@@ -28,7 +28,8 @@ void task_init()
 	}
 }
 
-void task_privilege_task_create(void(*func)())
+void task_privilege_task_create(void(*func)(),
+		enum task_priority priority)
 {
 	unsigned char *kernel_sp = NULL;
 	unsigned char *user_sp = NULL;
@@ -54,8 +55,10 @@ void task_privilege_task_create(void(*func)())
 			task_pool[i].state = RUNNING;
 			task_pool[i].need_reschedule = 0;
 			task_pool[i].epoch = DEFAULT_EPOCH;
+			task_pool[i].priority = priority;
+			task_pool[i].runnable_task_parent = NULL;
 			
-			scheduler_add_task_to_queue(&task_pool[i]);
+			scheduler_add_task_to_queue(&task_pool[i], RUNNABLE_TASK_CURRENT);
 			break;
 		}
 	}

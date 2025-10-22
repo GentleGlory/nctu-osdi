@@ -34,6 +34,13 @@
 #define   EXC_ESR_EC_DATA_ABORT_LOWER	(0b100100)	// Data Abort from a lower Exception level
 #define   EXC_ESR_EC_DATA_ABORT_SAME	(0b100101)	// Data Abort from the same Exception level
 
+struct pt_regs{
+	uint64_t	regs[31];
+	uint64_t	elr;
+	uint64_t	spsr;
+	uint64_t	sp;
+};
+
 extern void ret_to_user(void(*func)());
 
 #endif

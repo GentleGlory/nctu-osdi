@@ -1,5 +1,4 @@
 #include "shell.h"
-#include "uart.h"
 #include "core.h"
 #include "string.h"
 #include "time.h"
@@ -8,9 +7,33 @@
 #include "timer.h"
 #include "irq.h"
 #include "system_call.h"
+#include "delay.h"
 
 #ifdef BOOTLOADER
 #include "image_loader.h"
+#include "uart.h"
+
+	#define shell_getc()		uart_getc()
+	#define shell_putc(x)		uart_putc(x)
+	#define uprintf			printf
+	#define udelay(x)
+#else
+static char shell_getc()
+{
+	size_t size;
+	char c;
+
+	while ((size = system_call_uart_read(&c, 1)) == 0) {
+		udelay(10);
+	}
+
+	return c;
+}
+
+static void shell_putc(char c)
+{
+	system_call_uart_write(&c, 1);
+}
 #endif
 
 static int cmd_idx = 0;
@@ -73,7 +96,7 @@ static const struct shell_cmd shell_cmds[] = {
 
 static void hello_world_cmd(void)
 {
-	printf("\rHello World!\n");
+	uprintf("\rHello World!\n");
 }
 
 static void help_cmd(void)
@@ -81,11 +104,11 @@ static void help_cmd(void)
 	const struct shell_cmd* cmd = shell_cmds;
 
 	for (; cmd->cmd != NULL; cmd ++) {
-		printf("\r");
-		printf(cmd->cmd);
-		printf(": ");
-		printf(cmd->description);
-		printf("\n");
+		uprintf("\r");
+		uprintf(cmd->cmd);
+		uprintf(": ");
+		uprintf(cmd->description);
+		uprintf("\n");
 	}
 }
 
@@ -93,23 +116,24 @@ static void read_text_cmd(void)
 {
 	char c;
 
-	printf("\rReady to read text file.\n");
-	printf("\rSending ctrl+c will stop the transmission.\n");
+	uprintf("\rReady to read text file.\n");
+	uprintf("\rSending ctrl+c will stop the transmission.\n");
 
 	while (1) {
-		c = uart_getc();
+		c = shell_getc();
 		//ctrl+c 
 		if (c == 3) {
 			return;
 		}
 			
-		uart_putc(c);
+		shell_putc(c);
 	}
 }
 
 static void timestamp_cmd(void)
 {
-	system_call_run(SYS_CALL_TIME_STAMP);
+	system_call_print_timestamp();
+	
 }
 
 static void reboot_cmd(void)
@@ -119,12 +143,12 @@ static void reboot_cmd(void)
 
 static void exc_cmd()
 {
-	system_call_run(SYS_CALL_TEST);
+	system_call_test();
 }
 
 static void irq_cmd()
 {
-	system_call_run(SYS_CALL_IRQ_TEST);
+	syetem_call_irq_test();
 }
 
 #ifdef BOOTLOADER
@@ -136,13 +160,13 @@ static void loadimg_cmd(void)
 
 static enum ANSI_ESC decode_csi_key() 
 {
-	char c = uart_getc();
+	char c = shell_getc();
 	if (c == 'C') {
 		return ANSI_ESC_CURSOR_FORWARD;
 	} else if (c == 'D') {
 		return ANSI_ESC_CURSOR_BACKWARD;
 	} else if (c == '3') {
-		c = uart_getc();
+		c = shell_getc();
 		if (c == '~') {
 			return ANSI_ESC_DELETE;
 		}
@@ -152,7 +176,13 @@ static enum ANSI_ESC decode_csi_key()
 
 static enum ANSI_ESC decode_ansi_escape() 
 {
-	char c = uart_getc();
+	char c;
+	size_t size = 0;
+
+	while ((size = system_call_uart_read(&c, 1)) == 0) {
+		udelay(10);
+	}
+
 	if (c == '[') {
 		return decode_csi_key();
 	}
@@ -170,17 +200,30 @@ static void exec_shell_cmd(const char* cmd_name)
 		}
 	}
 
-	printf("\rErr: command %s not found, try <help>\n",cmd_name);
+	uprintf("\rErr: command %s not found, try <help>\n",cmd_name);
+}
+
+static void shell_flush()
+{
+	size_t size;
+	char c;
+
+	while ((size = system_call_uart_read(&c, 1)) != 0) {
+
+	}
 }
 
 void shell_main()
 {
 	char c;
+	size_t size = 0;
 	
-	printf("\r# ");
+	uprintf("\r# ");
 	
 	while (1) {
-		c = uart_getc();
+		c = shell_getc();
+		if (size == 0)
+			udelay(50);
 		// \e
 		if (c == 27) {
 			enum ANSI_ESC key = decode_ansi_escape();
@@ -200,14 +243,14 @@ void shell_main()
 				cmd_buffer[--cmd_idx] = '\0';
 			break;
 			case ANSI_ESC_UNKNOWN:
-				uart_flush();
+				shell_flush();
 			break;
 			}
 		} else if (c == 3) { // CTRL-C
 			cmd_buffer[0] = '\0';
 			cursor_idx = 0;
 			cmd_idx = 0;
-			printf("\r\e[K# ");
+			uprintf("\r\e[K# ");
 		} else if (c == 8 || c == 127) {// Backspace
 			if (cursor_idx > 0) {
 				cursor_idx--;
@@ -218,14 +261,14 @@ void shell_main()
 				cmd_buffer[--cmd_idx] = '\0';
 			}
 		} else if(c == '\n') {
-			printf("\r\n");
+			uprintf("\r\n");
 			if (cmd_idx > 0) {
 				exec_shell_cmd(cmd_buffer);
 			}
 			cmd_buffer[0] = '\0';
 			cursor_idx = 0;
 			cmd_idx = 0;
-			printf("\r# ");
+			uprintf("\r# ");
 		} else {
 			// right shift command
 			if (cursor_idx < cmd_idx) {
@@ -236,6 +279,6 @@ void shell_main()
 			cmd_buffer[cursor_idx++] = c;
 			cmd_buffer[++cmd_idx] = '\0';
 		}
-		printf("\r# %s \r\e[%dC", cmd_buffer, cursor_idx + 2);
+		uprintf("\r# %s \r\e[%dC", cmd_buffer, cursor_idx + 2);
 	}
 }

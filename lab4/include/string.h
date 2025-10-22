@@ -15,6 +15,8 @@ void reverse_str(char* str, int len);
 
 void printf(const char* fmt,...);
 
+void uprintf(const char* fmt, ...);
+
 int simple_scanf(const char* fmt,...);
 
 void memset(void *s, int c, unsigned int n);

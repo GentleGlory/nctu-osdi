@@ -45,7 +45,7 @@
 	// Assembly macro to define kernel exception handlers
 	.macro DEFINE_LOWER_EL_EXCEPTION_HANDLERS
 		el\()LOWER_EL\()t_64_sync:
-			b sync_exc_handler
+			b lower_el_sync_exc_handler
 
 		el\()LOWER_EL\()t_64_irq:
 			b irq_exc_el\()LOWER_EL\()_handler
@@ -70,65 +70,71 @@
 	.endm
 
 	.macro kernel_entry
-		sub sp, sp, #272
-		stp x0, x1, [sp, #16 * 0]
-		stp x2, x3, [sp, #16 * 1]
-		stp x4, x5, [sp, #16 * 2]
-		stp x6, x7, [sp, #16 * 3]
-		stp x8, x9, [sp, #16 * 4]
-		stp x10, x11, [sp, #16 * 5]
-		stp x12, x13, [sp, #16 * 6]
-		stp x14, x15, [sp, #16 * 7]
-		stp x16, x17, [sp, #16 * 8]
-		stp x18, x19, [sp, #16 * 9]
-		stp x20, x21, [sp, #16 * 10]
-		stp x22, x23, [sp, #16 * 11]
-		stp x24, x25, [sp, #16 * 12]
-		stp x26, x27, [sp, #16 * 13]
-		stp x28, x29, [sp, #16 * 14]
+		sub sp, sp, #PT_REGS_SIZE
+		stp x0, x1, [sp, #S_X0]
+		stp x2, x3, [sp, #S_X2]
+		stp x4, x5, [sp, #S_X4]
+		stp x6, x7, [sp, #S_X6]
+		stp x8, x9, [sp, #S_X8]
+		stp x10, x11, [sp, #S_X10]
+		stp x12, x13, [sp, #S_X12]
+		stp x14, x15, [sp, #S_X14]
+		stp x16, x17, [sp, #S_X16]
+		stp x18, x19, [sp, #S_X18]
+		stp x20, x21, [sp, #S_X20]
+		stp x22, x23, [sp, #S_X22]
+		stp x24, x25, [sp, #S_X24]
+		stp x26, x27, [sp, #S_X26]
+		stp x28, x29, [sp, #S_X28]
 
 		mrs x21, elr_el\()CURRENT_EL
 		mrs x22, spsr_el\()CURRENT_EL
 		mrs x23, sp_el\()LOWER_EL
 		
-		stp x30, x21, [sp, #16 * 15]
-		stp x22, x23, [sp, #16 * 16]
+		stp x30, x21, [sp, #S_LR]
+		stp x22, x23, [sp, #S_SPSR]
 	.endm
 
 	.macro kernel_exit
-		ldp x22, x23, [sp, #16 * 16]
-		ldp x30, x21, [sp, #16 * 15]
+		ldp x22, x23, [sp, #S_SPSR]
+		ldp x30, x21, [sp, #S_LR]
 		
 		msr elr_el\()CURRENT_EL, x21
 		msr spsr_el\()CURRENT_EL, x22
 		msr sp_el\()LOWER_EL, x23
 
-		ldp x28, x29, [sp, #16 * 14]
-		ldp x26, x27, [sp, #16 * 13]
-		ldp x24, x25, [sp, #16 * 12]
-		ldp x22, x23, [sp, #16 * 11]
-		ldp x20, x21, [sp, #16 * 10]
-		ldp x18, x19, [sp, #16 * 9]
-		ldp x16, x17, [sp, #16 * 8]
-		ldp x14, x15, [sp, #16 * 7]
-		ldp x12, x13, [sp, #16 * 6]
-		ldp x10, x11, [sp, #16 * 5]
-		ldp x8, x9, [sp, #16 * 4]
-		ldp x6, x7, [sp, #16 * 3]
-		ldp x4, x5, [sp, #16 * 2]
-		ldp x2, x3, [sp, #16 * 1]
-		ldp x0, x1, [sp, #16 * 0]
-		add sp, sp, #272
+		ldp x28, x29, [sp, #S_X28]
+		ldp x26, x27, [sp, #S_X26]
+		ldp x24, x25, [sp, #S_X24]
+		ldp x22, x23, [sp, #S_X22]
+		ldp x20, x21, [sp, #S_X20]
+		ldp x18, x19, [sp, #S_X18]
+		ldp x16, x17, [sp, #S_X16]
+		ldp x14, x15, [sp, #S_X14]
+		ldp x12, x13, [sp, #S_X12]
+		ldp x10, x11, [sp, #S_X10]
+		ldp x8, x9, [sp, #S_X8]
+		ldp x6, x7, [sp, #S_X6]
+		ldp x4, x5, [sp, #S_X4]
+		ldp x2, x3, [sp, #S_X2]
+		ldp x0, x1, [sp, #S_X0]
+		add sp, sp, #PT_REGS_SIZE
 		eret
 	.endm
 
 	.macro DEFINE_SYNC_EXC_HANDLER
 		sync_exc_handler:
 			kernel_entry
-			mrs x0, esr_el\()CURRENT_EL
-			mrs x1, elr_el\()CURRENT_EL
-			ldr x2, [sp, #16 * 4]	// Load saved x8 (syscall number)
-			bl  sync_exc_router
+			mov x0, sp
+			bl  el\()CURRENT_EL\()_sync_exc_router
+			kernel_exit
+	.endm
+
+	.macro DEFINE_LOWER_EL_SYNC_EXC_HANDLER
+		lower_el_sync_exc_handler:
+			kernel_entry
+			mov x0, sp
+			bl  el\()LOWER_EL\()_sync_exc_router
 			kernel_exit
 	.endm
 
@@ -136,13 +142,14 @@
 		irq_exc_handler:
 			kernel_entry
 			bl  irq_exc_router
+			bl  scheduler_do_schedule
 			kernel_exit
 	.endm
 
 	.macro RET_TO_USER
 		.global ret_to_user
 		ret_to_user:
-			sub sp, sp, #272
+			sub sp, sp, #PT_REGS_SIZE
 			stp x0, x1, [sp, #16 * 0]
 			stp x2, x3, [sp, #16 * 1]
 			stp x4, x5, [sp, #16 * 2]
@@ -209,6 +216,7 @@ DEFINE_CURRENT_EL_EXCEPTION_HANDLERS
 DEFINE_LOWER_EL_EXCEPTION_HANDLERS
 
 DEFINE_SYNC_EXC_HANDLER
+DEFINE_LOWER_EL_SYNC_EXC_HANDLER
 DEFINE_IRQ_EXC_HANDLER
 RET_TO_USER
 

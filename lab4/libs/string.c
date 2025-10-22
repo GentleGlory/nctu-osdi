@@ -1,7 +1,9 @@
 #include "uart.h"
 #include "string.h"
+#include "system_call.h"
 
 static void vprintf(const char* fmt,__builtin_va_list args);
+static void uvprintf(const char* fmt, __builtin_va_list args);
 
 int strcmp(const char* str1, const char* str2)
 {
@@ -57,24 +59,31 @@ void llu_to_str(unsigned long long llu, char* str)
 void lld_to_str(long long lld, char* str)
 {
 	int cnt = 0;
-	
+	int negative = 0;
+
 	if (lld < 0) {
 		str[0] = '-';
 		cnt++;
+		negative = 1;
 		lld = -lld;
 	}
-	
+
 	while (lld) {
 		str[cnt] = '0' + (lld % 10);
 		lld /= 10;
-		cnt++;	
+		cnt++;
 	}
-	
-	if (cnt) {
-		reverse_str(str,cnt);
+
+	if (cnt == (negative ? 1 : 0)) {
+		str[cnt] = '0';
+		cnt++;
+	}
+
+	// Only reverse the digit part, keep the negative sign at the front
+	if (negative) {
+		reverse_str(&str[1], cnt - 1);
 	} else {
-		str[0] = '0';
-		cnt ++;
+		reverse_str(str, cnt);
 	}
 
 	str[cnt] = '\0';
@@ -137,7 +146,8 @@ void printf(const char* fmt,...)
 {
 	__builtin_va_list args;
 	__builtin_va_start(args, fmt);
-	return vprintf(fmt, args);
+	vprintf(fmt, args);
+	__builtin_va_end(args);
 }
 
 static void vprintf(const char* fmt,__builtin_va_list args)
@@ -584,4 +594,145 @@ void memset(void *s, int c, unsigned int n)
 	for (unsigned int i = 0; i < n; i++) {
 		ptr[i] = value;
 	}
+}
+
+static void uvprintf(const char* fmt, __builtin_va_list args)
+{
+	char buffer[1024] = {0};
+	int buf_pos = 0;
+
+	while ((*fmt) != '\0' && buf_pos < 1023) {
+		if ((*fmt) == '%') {
+			fmt++;
+			if ((*fmt) == '\0') {
+				break;
+			} else if ((*fmt) == '%') {
+				buffer[buf_pos++] = '%';
+				fmt++;
+			} else if ((*fmt) == 'c') {
+				char c = (char)__builtin_va_arg(args, int);
+				buffer[buf_pos++] = c;
+				fmt++;
+			} else if ((*fmt) == 'd') {
+				int i = __builtin_va_arg(args, int);
+				char temp[32] = {0};
+				lld_to_str(i, temp);
+				int j = 0;
+				while (temp[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = temp[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 's') {
+				char* s = __builtin_va_arg(args, char*);
+				int j = 0;
+				while (s[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = s[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 'f') {
+				double f = __builtin_va_arg(args, double);
+				char temp[32] = {0};
+				double_to_str(f, 6, temp);
+				int j = 0;
+				while (temp[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = temp[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 'u') {
+				unsigned int u = __builtin_va_arg(args, unsigned int);
+				char temp[32] = {0};
+				llu_to_str(u, temp);
+				int j = 0;
+				while (temp[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = temp[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 'x') {
+				unsigned int u = __builtin_va_arg(args, unsigned int);
+				char temp[32] = {0};
+				llu_to_hex_str(u, temp, 0);
+				int j = 0;
+				while (temp[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = temp[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 'X') {
+				unsigned int u = __builtin_va_arg(args, unsigned int);
+				char temp[32] = {0};
+				llu_to_hex_str(u, temp, 1);
+				int j = 0;
+				while (temp[j] != '\0' && buf_pos < 1023) {
+					buffer[buf_pos++] = temp[j++];
+				}
+				fmt++;
+			} else if ((*fmt) == 'l') {
+				fmt++;
+
+				if ((*fmt) == 'l') {
+					fmt++;
+
+					if ((*fmt) == 'd') {
+						long long l = __builtin_va_arg(args, long long);
+						char temp[64] = {0};
+						lld_to_str(l, temp);
+						int j = 0;
+						while (temp[j] != '\0' && buf_pos < 1023) {
+							buffer[buf_pos++] = temp[j++];
+						}
+						fmt++;
+					} else if ((*fmt) == 'u') {
+						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
+						char temp[64] = {0};
+						llu_to_str(llu, temp);
+						int j = 0;
+						while (temp[j] != '\0' && buf_pos < 1023) {
+							buffer[buf_pos++] = temp[j++];
+						}
+						fmt++;
+					} else if ((*fmt) == 'x') {
+						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
+						char temp[64] = {0};
+						llu_to_hex_str(llu, temp, 0);
+						int j = 0;
+						while (temp[j] != '\0' && buf_pos < 1023) {
+							buffer[buf_pos++] = temp[j++];
+						}
+						fmt++;
+					} else if ((*fmt) == 'X') {
+						unsigned long long llu = __builtin_va_arg(args, unsigned long long);
+						char temp[64] = {0};
+						llu_to_hex_str(llu, temp, 1);
+						int j = 0;
+						while (temp[j] != '\0' && buf_pos < 1023) {
+							buffer[buf_pos++] = temp[j++];
+						}
+						fmt++;
+					}
+				} else if ((*fmt) == 'f') {
+					double d = __builtin_va_arg(args, double);
+					char temp[64] = {0};
+					double_to_str(d, 15, temp);
+					int j = 0;
+					while (temp[j] != '\0' && buf_pos < 1023) {
+						buffer[buf_pos++] = temp[j++];
+					}
+					fmt++;
+				}
+			}
+		} else {
+			buffer[buf_pos++] = (*fmt);
+			fmt++;
+		}
+	}
+
+	buffer[buf_pos] = '\0';
+	system_call_uart_write(buffer, buf_pos);
+}
+
+void uprintf(const char* fmt, ...)
+{
+	__builtin_va_list args;
+	__builtin_va_start(args, fmt);
+	uvprintf(fmt, args);
+	__builtin_va_end(args);
 }

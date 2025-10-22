@@ -10,6 +10,8 @@ typedef void (*flush_pfn)(void);
 typedef char (*getraw_pfn)(void);
 typedef void (*handle_irq_pfn)(void);
 typedef void (*do_rx_pfn)(void);
+typedef size_t (*read_pfn)(char buf[], size_t size);
+typedef size_t (*write_pfn)(const char buf[], size_t size);
 
 struct uart_instance {
 	init_pfn		init;
@@ -20,6 +22,8 @@ struct uart_instance {
 	getraw_pfn		getraw;
 	handle_irq_pfn	handle_irq;
 	do_rx_pfn		do_rx;
+	read_pfn		read;
+	write_pfn		write;
 };
 
 static enum UART_TYPE cur_uart_type = UART_TYPE_MINI_UART;
@@ -41,6 +45,8 @@ static const struct uart_instance uart_instance[UART_TYPE_TOTAL] = {
 		.getraw = uart0_getraw,
 		.handle_irq = uart0_handle_irq,
 		.do_rx = uart0_do_rx,
+		.read = uart0_read,
+		.write = uart0_write,
 	}
 };
 
@@ -94,4 +100,20 @@ void uart_do_rx()
 {
 	if (uart_instance[cur_uart_type].do_rx)
 		return uart_instance[cur_uart_type].do_rx();
+}
+
+size_t uart_read(char buf[], size_t size)
+{
+	if (uart_instance[cur_uart_type].read)
+		return uart_instance[cur_uart_type].read(buf, size);
+	
+	return 0;
+}
+
+size_t uart_write(const char buf[], size_t size)
+{
+	if (uart_instance[cur_uart_type].write)
+		return uart_instance[cur_uart_type].write(buf, size);
+	
+	return 0;
 }

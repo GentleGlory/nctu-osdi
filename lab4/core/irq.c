@@ -20,7 +20,7 @@ static void irq_core_timer_handler()
 {
 	timer_core_timer_reload();
 #ifndef BOOTLOADER	
-	scheduler_update_task_epoch();
+	scheduler_process();
 #endif	
 }
 

@@ -3,7 +3,7 @@
 #include "string.h"
 #include "uart.h"
 
-static uint64_t core_timer_jiffies = 0;
+//static uint64_t core_timer_jiffies = 0;
 //static uint64_t local_timer_jiffies = 0;
 static uint64_t system_timer_jiffies = 0;
 
@@ -33,7 +33,7 @@ void timer_core_timer_reload()
 		: "x0", "memory"
 	);
 
-	printf("\rCore timer jiffies:%llu\n", ++core_timer_jiffies);
+	//printf("\rCore timer jiffies:%llu\n", ++core_timer_jiffies);
 }
 
 void timer_local_timer_init()

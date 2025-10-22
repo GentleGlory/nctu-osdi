@@ -2,6 +2,7 @@
 #include "string.h"
 #include "irq.h"
 #include "system_call.h"
+#include "core.h"
 
 void show_exception_status(uint64_t type, uint64_t esr, uint64_t elr)
 {
@@ -17,30 +18,35 @@ void not_implemented()
 	while (1);
 }
 
-void sync_exc_router(uint64_t esr, uint64_t elr, uint64_t syscall_num)
+void el1_sync_exc_router(struct pt_regs* ptregs)
 {
-	//printf("\rIn sync_exc_router, esr:0x%llx, elr:0x%llx\n",
-	//		esr, elr);
-
+	uint64_t esr = read_sys_reg(esr_el1);
 	int ec = EXC_ESR_EC(esr);
 
+	printf("\r el1 sync_exc_router, esr:%llx, elr:%llx\n",
+			esr, ptregs->elr);
+	printf("\r Exception class (EC): 0x%x, ISS: 0x%x\n",
+			ec, (int)(esr & 0xFFFFFF));
+
+	// For now, hang for debugging data abort and other exceptions
+	// In a production system, you would handle different exception types
+	while(1);
+}
+
+void el0_sync_exc_router(struct pt_regs* ptregs)
+{
+	uint64_t esr = read_sys_reg(esr_el1);
+
+	int ec = EXC_ESR_EC(esr);
+	
 	if (ec == EXC_ESR_EC_SVC_ARM64) {
-		system_call_handler(syscall_num, esr, elr);
-	} else if (ec == EXC_ESR_EC_DATA_ABORT_LOWER || ec == EXC_ESR_EC_DATA_ABORT_SAME) {
-		// Data Abort exception handler
-		uint64_t far;
-		asm volatile("mrs %0, far_el1" : "=r"(far));
-
-		printf("\rData Abort Exception!\n");
-		printf("\rFault Address: 0x%llx\n", far);
-		printf("\rException Link Register (ELR): 0x%llx\n", elr);
-		printf("\rException Syndrome Register (ESR): 0x%llx\n", esr);
-		printf("\rISS: 0x%llx\n", esr & 0xFFFFFF);
-
+		system_call_exc_handler(ptregs);		
+	} else {
+		printf("\r el0 sync_exc_router, esr:%llx, elr:%llx\n",
+			esr, ptregs->elr);
+			
 		// Hang the system for debugging
 		while(1);
-	} else {
-		printf("\rUnhandeled ec:%x\n", ec);
 	}
 }
 
