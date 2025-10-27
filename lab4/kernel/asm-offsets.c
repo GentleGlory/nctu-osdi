@@ -36,6 +36,7 @@ int main(void)
 	DEFINE(TASK_ID, offsetof(struct task, task_id));
 	DEFINE(TASK_STATE, offsetof(struct task, state));
 	DEFINE(RESERVED_USER_SP, offsetof(struct task, reserved_user_sp));
+	DEFINE(RESERVED_KERNEL_SP, offsetof(struct task, reserved_kernel_sp));
 	BLANK();
 
 	DEFINE(S_X0, offsetof(struct pt_regs, regs[0]));

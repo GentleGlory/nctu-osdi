@@ -3,7 +3,6 @@
 .section ".text"
 .align	3
 .global switch_to
-
 switch_to:
 	stp x19, x20, [x0, #CPU_CONTEXT_X19]
 	stp x21, x22, [x0, #CPU_CONTEXT_X21]
@@ -29,11 +28,13 @@ switch_to:
 	ret
 
 .global get_current
+.align	3
 get_current:
 	mrs x0, tpidr_el1
 	ret
 
 .global set_current
+.align	3
 set_current:
 	msr tpidr_el1, x0
 	ret

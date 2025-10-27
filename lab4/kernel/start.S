@@ -48,6 +48,7 @@ _start:
 	msr elr_el2, x0
 	eret
 
+.align	3
 el1_start:
 	//Setting sp
 	ldr x0, =EL1_SP
@@ -73,6 +74,7 @@ el1_start:
 	msr elr_el1, x1
 	eret
 	
+.align	3	
 el0_start:
 	//Setting sp
 	ldr x0, =EL0_SP

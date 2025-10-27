@@ -108,10 +108,7 @@ static size_t system_call_uart_write_handler(const char buf[], size_t size)
 static int system_call_exec_handler(struct pt_regs *pt_regs)
 {
 #ifndef BOOTLOADER
-	struct task *cur = current;
-
-	pt_regs->elr = pt_regs->regs[0];
-	pt_regs->sp = cur->reserved_user_sp;
+	task_do_exec((void(*)())pt_regs->regs[0]);
 #endif
 	return 0;
 }

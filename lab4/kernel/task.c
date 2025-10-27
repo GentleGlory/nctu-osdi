@@ -5,8 +5,8 @@
 #include "exception.h"
 #include "context.h"
 
-struct task task_pool[TASK_POOL_SIZE];
-struct task idle_task;
+struct task task_pool[TASK_POOL_SIZE] __attribute__((aligned(16)));
+struct task idle_task __attribute__((aligned(16)));
 
 extern unsigned char __kernel_stack_start;
 extern unsigned char __user_stack_start;
@@ -38,27 +38,34 @@ void task_privilege_task_create(void(*func)(),
 
 	for (int i = 0; i < TASK_POOL_SIZE; i++) {
 		if (task_pool[i].state == EXIT) {
+			struct task *t = &task_pool[i];
+
 			// Clear all CPU context registers
-			memset(&task_pool[i].cpu_context, 0, sizeof(struct cpu_context));
+			memset(&t->cpu_context, 0, sizeof(struct cpu_context));
 
 			// Set program counter to task function
-			task_pool[i].cpu_context.pc = (uint64_t) func;
+			t->cpu_context.pc = (uint64_t) func;
 
 			// Set up stack pointer (aligned to 16 bytes)
 			kernel_sp = kernel_reserved_sp + KERNEL_STACK_SIZE * i - 1;
-			task_pool[i].cpu_context.sp = ((uint64_t) kernel_sp) & (~((uint64_t)0xf));
+			t->cpu_context.sp = ((uint64_t) kernel_sp) & (~((uint64_t)0xf));
+			t->reserved_kernel_sp = t->cpu_context.sp;
 
 			user_sp = user_reserved_sp + USER_STACK_SIZE * i - 1;
-			task_pool[i].reserved_user_sp = ((uint64_t) user_sp) & (~((uint64_t)0xf));
+			t->reserved_user_sp = ((uint64_t) user_sp) & (~((uint64_t)0xf));
 
 			// Mark task as ready to run
-			task_pool[i].state = RUNNING;
-			task_pool[i].need_reschedule = 0;
-			task_pool[i].epoch = DEFAULT_EPOCH;
-			task_pool[i].priority = priority;
-			task_pool[i].runnable_task_parent = NULL;
-			
-			scheduler_add_task_to_queue(&task_pool[i], RUNNABLE_TASK_CURRENT);
+			// IMPORTANT: Must set state explicitly to RUNNING (0) to prevent compiler
+			// from assuming it's already 0 and optimizing away this assignment
+			t->need_reschedule = 0;
+			t->epoch = DEFAULT_EPOCH;
+			t->priority = priority;
+			t->runnable_task_parent = NULL;
+
+			// Force state assignment to happen by using volatile cast
+			*((volatile enum task_state *)&t->state) = RUNNING;
+
+			scheduler_add_task_to_queue(t, RUNNABLE_TASK_CURRENT);
 			break;
 		}
 	}
