@@ -17,6 +17,7 @@ enum RUNNABLE_TASK_TYPE{
 void scheduler_init();
 void scheduler_process();
 void scheduler_do_schedule();
+void scheduler_remove_task_from_queue(struct task * task);
 void scheduler_add_task_to_queue(struct task * task, enum RUNNABLE_TASK_TYPE type);
 
 void scheduler_set_current_task_delay(uint64_t ms);

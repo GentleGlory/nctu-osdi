@@ -25,6 +25,9 @@ switch_to:
 	ldr lr, [x1, #CPU_CONTEXT_PC]
 	
 	msr tpidr_el1, x1
+	cbnz x2, 1f
+	msr daifclr, #2
+1:
 	ret
 
 .global get_current
@@ -38,4 +41,3 @@ get_current:
 set_current:
 	msr tpidr_el1, x0
 	ret
-

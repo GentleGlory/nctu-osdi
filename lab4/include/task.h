@@ -4,6 +4,7 @@
 #ifndef __LINKER__
 #include "core.h"
 #include "list.h"
+#include "exception.h"
 #endif
 
 #define TASK_POOL_SIZE	64
@@ -65,7 +66,7 @@ struct task {
 
 extern struct task task_pool[TASK_POOL_SIZE];
 
-extern struct task idle_task;
+extern struct task *idle_task;
 
 void task_init();
 
@@ -73,6 +74,15 @@ void task_privilege_task_create(void(*func)(),
 		enum task_priority priority);
 
 void task_do_exec(void(*func)());
+
+void task_exit(int status);
+
+void task_zombie_reaper();
+
+void task_do_fork(struct pt_regs *pt_regs);
+
+int task_get_cur_task_id();
+
 
 #endif
 

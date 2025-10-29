@@ -72,6 +72,11 @@ void system_call_delay(uint64_t ms)
 	system_call_run(SYS_CALL_DELAY, ms, 0, 0, 0, 0, 0);
 }
 
+int system_call_get_task_id()
+{
+	return (int)system_call_run(SYS_CALL_GET_TASK_ID, 0, 0, 0, 0, 0, 0);
+}
+
 //Handler
 static void system_call_time_stamp_handler()
 {
@@ -92,7 +97,9 @@ static void system_call_user_task_do_schedule_handler()
 {
 #ifndef BOOTLOADER	
 	scheduler_do_schedule();
-#endif	
+#else
+	printf("\rNot implemented.\n");
+#endif
 }
 
 static size_t system_call_uart_read_handler(char buf[], size_t size)
@@ -109,24 +116,46 @@ static int system_call_exec_handler(struct pt_regs *pt_regs)
 {
 #ifndef BOOTLOADER
 	task_do_exec((void(*)())pt_regs->regs[0]);
+#else
+	printf("\rNot implemented.\n");
 #endif
 	return 0;
 }
 
-static int system_call_fork_handler()
+static void system_call_fork_handler(struct pt_regs *pt_regs)
 {
-	return 0;
+#ifndef BOOTLOADER
+	task_do_fork(pt_regs);
+#else 
+	printf("\rNot implemented.\n");	
+#endif	
 }
 
 static void system_call_exit_handler(int status)
 {
-	
+#ifndef BOOTLOADER
+	task_exit(status);
+#else
+	printf("\rNot implemented.\n");
+#endif
 }
 
 static void system_call_delay_handler(uint64_t ms)
 {
 #ifndef BOOTLOADER
 	delay(ms);
+#else 
+	printf("\rNot implemented.\n");
+#endif
+}
+
+static int system_call_get_task_id_handler()
+{
+#ifndef BOOTLOADER	
+	return task_get_cur_task_id();
+#else
+	printf("\rNot implemented.\n");
+	return 0;
 #endif
 }
 
@@ -193,13 +222,16 @@ void system_call_exc_handler(struct pt_regs *pt_regs)
 			pt_regs->regs[0] = (uint64_t)system_call_exec_handler(pt_regs);
 		break;
 		case SYS_CALL_TASK_FORK:
-			pt_regs->regs[0] = (uint64_t)system_call_fork_handler();
+			system_call_fork_handler(pt_regs);
 		break;
 		case SYS_CALL_TASK_EXIT:
 			system_call_exit_handler((int)pt_regs->regs[0]);
 		break;
 		case SYS_CALL_DELAY:
 			system_call_delay_handler(pt_regs->regs[0]);
+		break;
+		case SYS_CALL_GET_TASK_ID:
+			pt_regs->regs[0] = (uint64_t)system_call_get_task_id_handler();
 		break;
 		default:
 			printf("\rUnhandled system call num:%lld\n", syscall_num);

@@ -14,6 +14,7 @@
 #define SYS_CALL_TASK_FORK			7
 #define SYS_CALL_TASK_EXIT			8
 #define SYS_CALL_DELAY				9
+#define SYS_CALL_GET_TASK_ID		10
 
 
 void system_call_exc_handler(struct pt_regs *pt_regs);
@@ -28,6 +29,7 @@ int system_call_exec(void(*func)());
 int system_call_fork();
 void system_call_exit(int status);
 void system_call_delay(uint64_t ms);
+int system_call_get_task_id();
 
 
 

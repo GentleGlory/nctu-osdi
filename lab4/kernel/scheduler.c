@@ -28,8 +28,6 @@ static struct list_head *next_runnable_task_list = NULL;
 static volatile uint64_t scheduler_tick_count = 0;
 static volatile uint64_t scheduler_next_unblock_time = 0;
 
-static void scheduler_remove_task_from_queue(struct task * task);
-
 void scheduler_init()
 {
 	cur_delayed_list = &delayed_task1;
@@ -105,7 +103,7 @@ static void scheduler_update_tick_count()
 static void scheduler_update_task_epoch()
 {
 	struct task *cur = current;
-	if (cur != &idle_task) {
+	if (cur != idle_task) {
 		cur->epoch --;
 		
 		if (cur->epoch <= 0) {
@@ -129,7 +127,7 @@ static void scheduler_switch_runnable_task_list()
 
 static struct task *scheduler_get_next_task()
 {
-	struct task *ret = &idle_task;
+	struct task *ret = idle_task;
 	uint32_t top_priority = 0;
 	uint64_t irq_state;
 
@@ -161,16 +159,18 @@ void scheduler_do_schedule()
 		
 		next = scheduler_get_next_task();
 		if (next != cur) {
-			if (cur != &idle_task) {
+			uint64_t irq_state;
+
+			if (cur != idle_task) {
 				cur->need_reschedule = 0;
 
 				if (cur->epoch <= 0)
 					cur->epoch = DEFAULT_EPOCH;
 			}
 			
-			context_switch(next);
-
-			irq_enable();
+			irq_state = lock_irq_save();
+			context_switch(next, irq_state);
+			lock_irq_restore(irq_state);
 		}
 	}
 }
@@ -201,7 +201,7 @@ void scheduler_add_task_to_queue(struct task * task, enum RUNNABLE_TASK_TYPE typ
 	task->runnable_task_parent = runnable_task_list;
 }
 
-static void scheduler_remove_task_from_queue(struct task * task)
+void scheduler_remove_task_from_queue(struct task * task)
 {
 	uint32_t *ready_priorities = 
 		task->runnable_task_parent == runnable_task_list_1 ?

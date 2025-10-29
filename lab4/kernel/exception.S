@@ -165,7 +165,7 @@
 			ldr x21, [sp, #0]					//get the function pointer
 			ldr x22, =SPSR_EL1_EL0
 			ldr x23, [x0, #RESERVED_USER_SP]
-
+		
 			ldr x1, [x0, #RESERVED_KERNEL_SP]	//get the kernel sp
 			mov sp, x1
 

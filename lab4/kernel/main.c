@@ -12,13 +12,33 @@
 #include "delay.h"
 #include "system_call.h"
 
-static void task_1();
-static void task_2();
-static void task_3();
-static void task_user_1();
-static void task_user_2();
-static void task_4();
-static void task_5();
+void foo_2(){
+	int tmp = 5;
+	uprintf("\rTask %d after exec, tmp address 0x%x, tmp value %d\n", system_call_get_task_id(), &tmp, tmp);
+	system_call_exit(0);
+}
+
+void test() {
+	int cnt = 1;
+	if (system_call_fork() == 0) {
+		system_call_fork();
+		udelay(100);
+		system_call_fork();
+		while(cnt < 10) {
+			uprintf("\rTask id: %d, cnt: %d\n", system_call_get_task_id(), cnt);
+			udelay(1000);
+			++cnt;
+		}
+		system_call_exit(0);
+		uprintf("\rShould not be printed\n");
+	} else {
+		uprintf("\rTask %d before exec, cnt address 0x%x, cnt value %d\n", system_call_get_task_id(), &cnt, cnt);
+		system_call_exec(foo_2);
+	}
+}
+
+// -----------above is user code-------------
+// -----------below is kernel code-------------
 
 void print_board_info(void)
 {
@@ -37,61 +57,17 @@ static void do_exec(void(*func)())
 	task_do_exec(func);
 }
 
-
-static void task_1()
+void foo_1()
 {
-	while (1) {
-		
-		printf("\r1...\n");
+	struct task * cur = current;
+	while(1) {
+		printf("\rTask id: %d\n", cur->task_id);
 		delay(1000);
 	}
 }
 
-static void task_2()
-{
-	while (1) {
-		printf("\r2...\n");
-		delay(1000);
-	}
-}
-
-static void task_3()
-{
-	while (1) {
-		printf("\r3...\n");
-		delay(2000);
-	}
-}
-
-
-static void task_user_1()
-{
-	while (1) {
-		uprintf("\rUser task 1...\n");
-		udelay(1000);
-		system_call_exec(task_user_2);
-	}
-}
-
-static void task_user_2()
-{
-	while (1) {
-		uprintf("\rUser task 2...\n");
-		udelay(1000);
-		system_call_exec(task_user_1);
-	}
-}
-
-static void task_4()
-{
-	printf("\r4...\n");
-	do_exec(task_user_1);
-}
-
-static void task_5()
-{
-	printf("\r5...\n");
-	do_exec(shell_main);
+void user_test(){
+	do_exec(test);
 }
 
 void main(void)
@@ -111,12 +87,12 @@ void main(void)
 	scheduler_init();
 	context_init();
 
-	task_privilege_task_create(task_1, PRIORITY_LOW);
-	task_privilege_task_create(task_2, PRIORITY_HIGH);
-	task_privilege_task_create(task_3, PRIORITY_NORMAL);
-	task_privilege_task_create(task_4, PRIORITY_NORMAL);
-	task_privilege_task_create(task_5, PRIORITY_NORMAL);
-	
+	for(int i = 0; i < 3; ++i) { // N should > 2
+		task_privilege_task_create(foo_1, PRIORITY_NORMAL);
+	}
+	task_privilege_task_create(user_test, PRIORITY_NORMAL);
+	task_privilege_task_create(task_zombie_reaper, PRIORITY_LOW);
+
 	timer_core_timer_enable();
 	irq_enable();
 	
