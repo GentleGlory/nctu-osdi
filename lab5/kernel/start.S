@@ -1,0 +1,89 @@
+#include "sys_regs.h"
+#include "mmu.h"
+
+.section ".text"
+.align	3
+.global mmu_started
+_start:
+	ldr x1, =__el2_sp
+	mov sp,x1
+	//Let only one core proceed, and let others enter a busy loop.
+	mrs x0, mpidr_el1
+	and x0, x0, #0xff
+	cmp x0, 0
+	b.eq 2f
+
+1:	wfe
+	b 1b
+
+2:	mrs x0, hcr_el2
+	ldr x1, =HCR_EL2_RW_AARCH64 
+	orr x0, x0, x1
+	msr hcr_el2, x0
+	
+	ldr x0, =SPSR_EL2_DAIF_DISABLE
+	ldr x1, =SPSR_EL2_M_EL1H
+	orr x0, x0, x1
+	msr spsr_el2, x0
+
+	//Enanle floating point and Advanced SIMD
+	mrs x0, cpacr_el1
+	ldr x1, =CPACR_EL1_FPEN
+	orr x0, x0, x1
+	msr cpacr_el1, x0
+
+	adr x0, el1_start
+	msr elr_el2, x0
+	eret
+
+.align	3
+el1_start:
+	b enable_mmu
+
+mmu_started:
+	//Setting exception table
+	adrp x0, exception_table
+	add x0, x0, #:lo12:exception_table
+	msr vbar_el1, x0
+
+	//Setting sp
+	ldr x0, =__el1_sp
+	mov sp, x0
+
+	//Clear BSS
+	ldr x0, =__bss_start
+	ldr x1, =__bss_end
+	mov x2, #0
+	mov x3, #0
+3:	cmp x0, x1
+	b.eq 4f
+	stp x2, x3, [x0], #16
+	b 3b
+
+#if 0
+	mrs x1, spsr_el1
+	ldr x2, =SPSR_EL1_DAIF_MASK
+	and x1, x1, x2
+	ldr x2, =SPSR_EL1_DAIF_CLEAR_ALL
+	orr x1, x1, x2
+
+	ldr x2, =SPSR_EL1_EL_MASK
+	and x1, x1, x2
+	ldr x2, =SPSR_EL1_EL0
+	orr x1, x1, x2
+	msr spsr_el1, x1
+
+	adr x1, el0_start
+	msr elr_el1, x1
+	eret
+	
+.align	3	
+el0_start:
+	//Setting sp
+	ldr x0, =__el0_sp
+	mov sp, x0
+	//Run main function
+#endif
+4:	b main
+	b 4b
+
