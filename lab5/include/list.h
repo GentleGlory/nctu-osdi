@@ -5,7 +5,7 @@
 
 struct list_head {
 	struct list_head *next, *prev;
-};
+} __attribute__((aligned(16)));
 
 #define LIST_HEAD_INIT(name) { &(name), &(name) }
 

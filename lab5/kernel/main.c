@@ -11,6 +11,7 @@
 #include "scheduler.h"
 #include "delay.h"
 #include "system_call.h"
+#include "page.h"
 
 void foo_2(){
 	int tmp = 5;
@@ -78,9 +79,11 @@ void run_shell()
 
 void main(void)
 {
-	uart_init(UART_TYPE_UART0);
-	//uart_init(UART_TYPE_MINI_UART);
+	//uart_init(UART_TYPE_UART0);
+	uart_init(UART_TYPE_MINI_UART);
 	
+	page_init();
+
 	timer_local_timer_init();
 	print_board_info();
 

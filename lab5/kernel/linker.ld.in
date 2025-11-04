@@ -5,13 +5,11 @@ SECTIONS
 {
 	. = 0xffff000000000000; // kernel space
 	__kernel_virtual_base = .;
-	. += 0x20000;
-	__el0_sp = .;
-	. += 0x20000;
-	__el1_sp = .;
-	. += 0x20000;
-	__el2_sp = .;
 	. = __kernel_virtual_base + 0x80000; // kernel load address
+	__el2_sp = .;
+	__el1_sp = __el2_sp - 0x20000;
+	__el0_sp = __el1_sp - 0x20000;
+	__kernel_start = __el0_sp - 0x20000;
 	.text : {
 		*start.S.obj(.text)
 		*(.text)
@@ -58,4 +56,7 @@ SECTIONS
 	__id_map_pmd_start = .;
 	. += 0x2000;    /* 8KB */
 	__id_map_pmd_end = .;
+	
+	. = ALIGN(0x1000);
+	__kernel_end = .;
 }

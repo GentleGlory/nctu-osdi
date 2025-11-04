@@ -10,11 +10,15 @@
 #define BOOT_PUD_ATTR	PD_TABLE
 #define BOOT_PMD_ATTR	(PD_BLOCK | PD_ACCESS)
 
-
 #define PGD_SHIFT	39
 #define PUD_SHIFT	30
 #define PMD_SHIFT	21
 #define PTE_SHIFT	12
+
+#define PGD_MAX_BIT_POS		48
+#define PUD_MAX_BIT_POS		39
+#define PMD_MAX_BIT_POS		29
+#define PTE_MAX_BIT_POS		20
 
 #define PGD_BIT_SIZE	9
 #define PUD_BIT_SIZE	9
