@@ -79,8 +79,8 @@ void run_shell()
 
 void main(void)
 {
-	//uart_init(UART_TYPE_UART0);
-	uart_init(UART_TYPE_MINI_UART);
+	uart_init(UART_TYPE_UART0);
+	//uart_init(UART_TYPE_MINI_UART);
 	
 	page_init();
 

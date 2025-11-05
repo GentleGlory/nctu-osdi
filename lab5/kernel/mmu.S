@@ -107,8 +107,8 @@ mapping_pmd:
 	orr x7, x4, x7
 	str x7, [x5, x6, lsl #3]
 
-	add x0, x0, #PMD_BLOCK_SIZE
-	add x1, x1, #PMD_BLOCK_SIZE
+	add x0, x0, #PMD_SIZE
+	add x1, x1, #PMD_SIZE
 
 	b 1b
 
