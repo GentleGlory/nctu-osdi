@@ -2,9 +2,7 @@
 #include "timer.h"
 #include "string.h"
 #include "uart.h"
-#ifndef BOOTLOADER
 #include "scheduler.h"
-#endif
 
 void irq_enable()
 {
@@ -19,9 +17,7 @@ void irq_disable()
 static void irq_core_timer_handler()
 {
 	timer_core_timer_reload();
-#ifndef BOOTLOADER	
 	scheduler_process();
-#endif	
 }
 
 static void irq_local_timer_handler()

@@ -1,14 +1,14 @@
-#include "uart.h"
+#include "uart0.h"
 #include "string.h"
 #include "shell.h"
 
 void main(void)
 {
-	uart_init(UART_TYPE_MINI_UART);
+	uart0_init();
 
 	printf("\rFrank bootloader init\n");
 
-	uart_flush();
+	uart0_flush();
 
 	shell_main();
 

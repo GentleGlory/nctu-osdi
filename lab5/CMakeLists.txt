@@ -36,7 +36,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -nostdlib -nostartfiles")
 enable_language(C ASM)
 
 # Generate asm-offsets.h
-set(ASM_OFFSETS_C "${CMAKE_CURRENT_SOURCE_DIR}/kernel/asm-offsets.c")
+set(ASM_OFFSETS_C "${CMAKE_CURRENT_SOURCE_DIR}/kernel/core/asm-offsets.c")
 set(ASM_OFFSETS_S "${CMAKE_CURRENT_BINARY_DIR}/asm-offsets.s")
 set(ASM_OFFSETS_H "${CMAKE_CURRENT_BINARY_DIR}/include/asm-offsets.h")
 
@@ -46,7 +46,7 @@ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include")
 # Step 1: Compile asm-offsets.c to assembly
 add_custom_command(
 	OUTPUT ${ASM_OFFSETS_S}
-	COMMAND ${CMAKE_C_COMPILER} -S ${ASM_OFFSETS_C} -o ${ASM_OFFSETS_S} -I${CMAKE_CURRENT_SOURCE_DIR}/include -Wall -ffreestanding -nostdinc -nostdlib -O2
+	COMMAND ${CMAKE_C_COMPILER} -S ${ASM_OFFSETS_C} -o ${ASM_OFFSETS_S} -I${CMAKE_CURRENT_SOURCE_DIR}/kernel/include -Wall -ffreestanding -nostdinc -nostdlib -O2
 	DEPENDS ${ASM_OFFSETS_C}
 	COMMENT "Generating asm-offsets.s"
 )
@@ -62,12 +62,9 @@ add_custom_command(
 # Create a custom target for asm-offsets.h
 add_custom_target(generate_asm_offsets DEPENDS ${ASM_OFFSETS_H})
 
-# Find source files (exclude asm-offsets.c from kernel sources)
-file(GLOB COMMON_C_SOURCES "core/*.c" "drivers/*.c" "libs/*.c")
-
-file(GLOB KERNEL_C_SOURCES "kernel/*.c")
+file(GLOB KERNEL_C_SOURCES "kernel/core/*.c" "kernel/drivers/*.c" "kernel/libs/*.c")
 list(REMOVE_ITEM KERNEL_C_SOURCES "${ASM_OFFSETS_C}")
-file(GLOB KERNEL_ASM_SOURCES "kernel/*.S")
+file(GLOB KERNEL_ASM_SOURCES "kernel/core/*.S")
 
 file(GLOB BOOTLOADER_C_SOURCES "bootloader/*.c")
 file(GLOB BOOTLOADER_ASM_SOURCES "bootloader/*.S")
@@ -78,10 +75,7 @@ file(GLOB BOOTLOADER_ASM_SOURCES "bootloader/*.S")
 add_executable(kernel8.elf ${COMMON_C_SOURCES} ${BOOTLOADER_C_SOURCES} ${BOOTLOADER_ASM_SOURCES})
 
 # Add include directories
-target_include_directories(kernel8.elf PRIVATE include)
-
-# Add BOOTLOADER define for bootloader target
-target_compile_definitions(kernel8.elf PRIVATE BOOTLOADER)
+target_include_directories(kernel8.elf PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bootloader)
 
 # Set linker script
 set_target_properties(kernel8.elf PROPERTIES
@@ -98,12 +92,12 @@ add_custom_command(
 
 # kernel is named kernel_real.img
 # Preprocess kernel linker script
-set(KERNEL_LINKER_SCRIPT_IN "${CMAKE_CURRENT_SOURCE_DIR}/kernel/linker.ld.in")
+set(KERNEL_LINKER_SCRIPT_IN "${CMAKE_CURRENT_SOURCE_DIR}/kernel/core/linker.ld.in")
 set(KERNEL_LINKER_SCRIPT_OUT "${CMAKE_CURRENT_BINARY_DIR}/kernel_linker.ld")
 
 add_custom_command(
 	OUTPUT ${KERNEL_LINKER_SCRIPT_OUT}
-	COMMAND ${CMAKE_C_COMPILER} -E -P -x c -I${CMAKE_CURRENT_SOURCE_DIR}/include ${KERNEL_LINKER_SCRIPT_IN} -o ${KERNEL_LINKER_SCRIPT_OUT}
+	COMMAND ${CMAKE_C_COMPILER} -E -P -x c -I${CMAKE_CURRENT_SOURCE_DIR}/kernel/include ${KERNEL_LINKER_SCRIPT_IN} -o ${KERNEL_LINKER_SCRIPT_OUT}
 	DEPENDS ${KERNEL_LINKER_SCRIPT_IN}
 	COMMENT "Preprocessing kernel linker script"
 )
@@ -114,7 +108,7 @@ add_executable(kernel_real.elf ${COMMON_C_SOURCES} ${KERNEL_C_SOURCES} ${KERNEL_
 
 # Add include directories (include generated headers)
 target_include_directories(kernel_real.elf PRIVATE
-	include
+	${CMAKE_CURRENT_SOURCE_DIR}/kernel/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
@@ -133,6 +127,50 @@ add_custom_command(
     COMMENT "Creating binary image kernel_real.img"
     BYPRODUCTS kernel_real.img
 )
+
+# Build user shell program
+file(GLOB USER_C_SOURCES "user/libs/*.c")
+file(GLOB USER_ASM_SOURCES "user/libs/*.S")
+set(USER_SHELL_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/user/shell.c")
+
+add_executable(shell.elf
+    ${USER_SHELL_SOURCE}
+    ${USER_C_SOURCES}
+    ${USER_ASM_SOURCES}
+)
+
+target_include_directories(shell.elf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/user/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/include/uapi
+)
+
+target_compile_options(shell.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles)
+
+set_target_properties(shell.elf PROPERTIES
+    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/user/linker.ld"
+)
+
+add_custom_command(
+    TARGET shell.elf POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary shell.elf shell.bin
+    COMMENT "Creating binary image shell.bin"
+    BYPRODUCTS shell.bin
+)
+
+set(SHELL_BIN "${CMAKE_CURRENT_BINARY_DIR}/shell.bin")
+set(SHELL_BIN_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/shell_bin.o")
+
+add_custom_command(
+    OUTPUT ${SHELL_BIN_OBJECT}
+    COMMAND ${CMAKE_LINKER} -r -b binary shell.bin -o shell_bin.o
+    DEPENDS ${SHELL_BIN}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Embedding shell.bin into ${SHELL_BIN_OBJECT}"
+)
+
+set_source_files_properties(${SHELL_BIN_OBJECT} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
+add_dependencies(kernel_real.elf shell.elf)
+target_sources(kernel_real.elf PRIVATE ${SHELL_BIN_OBJECT})
 
 # Custom target for running bootloader in QEMU
 add_custom_target(run

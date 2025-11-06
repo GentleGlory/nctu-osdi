@@ -1,8 +1,6 @@
 #ifndef _CORE_H
 #define _CORE_H
 
-#ifndef __ASM__
-
 #define MMIO_BASE	0x3f000000
 
 #define BITS_PER_LONG 64
@@ -15,31 +13,18 @@
     (((~0UL) - (1UL << (l)) + 1) & \
      (~0UL >> (BITS_PER_LONG - 1 - (h))))
 
-typedef unsigned int 		uint32_t;
-typedef unsigned long long 	uint64_t;
-typedef int 				int32_t;
-typedef long long 			int64_t;
-typedef unsigned char 		byte;
-typedef unsigned long		size_t;
-typedef int					bool;
-
-#define TRUE	1
-#define FALSE	0
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
+typedef int int32_t;
+typedef long long int64_t;
+typedef unsigned char byte;
 
 #define INT64_MAX	(9223372036854775807LL)
 #define INT64_MIN	(-9223372036854775807LL - 1)
 
-#define UINT64_MAX	0xFFFFFFFFFFFFFFFF
-
 #ifndef NULL
 #define NULL ((void*)0)
 #endif
-
-#define offsetof(type, member)  __builtin_offsetof(type, member)
-
-#define container_of(ptr, type, member) ({						\
-	const typeof(((type *)0)->member) *__mptr = (ptr);			\
-	(type *)((char *)__mptr - offsetof(type, member)); })
 
 static inline void writel(uint64_t address, uint32_t val)
 {
@@ -60,7 +45,5 @@ static inline uint32_t readl(unsigned long long address)
 	asm volatile("mrs %0, " #reg : "=r" (__val)); \
 	__val; \
 })
-
-#endif
 
 #endif

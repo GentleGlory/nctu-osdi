@@ -1,8 +1,7 @@
-#ifndef _SYSTEM_CALL_H
-#define _SYSTEM_CALL_H
+#ifndef _UAPI_SYSTEM_CALL_H
+#define _UAPI_SYSTEM_CALL_H
 
-#include "core.h"
-#include "exception.h"
+#include "type.h"
 
 #define SYS_CALL_TEST				0
 #define SYS_CALL_PRINT_TIME_STAMP	1
@@ -17,8 +16,6 @@
 #define SYS_CALL_GET_TASK_ID		10
 
 
-void system_call_exc_handler(struct pt_regs *pt_regs);
-
 void system_call_test();
 void system_call_print_timestamp();
 void syetem_call_irq_test();
@@ -30,7 +27,6 @@ int system_call_fork();
 void system_call_exit(int status);
 void system_call_delay(uint64_t ms);
 int system_call_get_task_id();
-
 
 
 #endif

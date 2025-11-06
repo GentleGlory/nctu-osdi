@@ -5,7 +5,5 @@
 
 //delay ms
 void delay(uint64_t ms);
-void udelay(uint64_t ms);
-
 
 #endif
