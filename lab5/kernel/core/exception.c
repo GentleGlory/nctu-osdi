@@ -28,6 +28,9 @@ void el1_sync_exc_router(struct pt_regs* ptregs)
 	printf("\r Exception class (EC): 0x%x, ISS: 0x%x\n",
 			ec, (int)(esr & 0xFFFFFF));
 
+	uint64_t far = read_sys_reg(far_el1);
+	printf("\rFAR 0x%llx\n", far);
+
 	// For now, hang for debugging data abort and other exceptions
 	// In a production system, you would handle different exception types
 	while(1);
@@ -44,7 +47,8 @@ void el0_sync_exc_router(struct pt_regs* ptregs)
 	} else {
 		printf("\r el0 sync_exc_router, esr:%llx, elr:%llx\n",
 			esr, ptregs->elr);
-			
+		uint64_t far = read_sys_reg(far_el1);
+		printf("\rFAR 0x%llx\n", far);
 		// Hang the system for debugging
 		while(1);
 	}
