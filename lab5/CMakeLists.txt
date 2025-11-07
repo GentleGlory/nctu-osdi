@@ -144,7 +144,7 @@ target_include_directories(shell.elf PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/include/uapi
 )
 
-target_compile_options(shell.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles)
+target_compile_options(shell.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles )
 
 set_target_properties(shell.elf PROPERTIES
     LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/user/linker.ld"

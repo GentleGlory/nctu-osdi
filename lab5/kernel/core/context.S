@@ -1,4 +1,5 @@
 #include "asm-offsets.h"
+#include "mmu.h"
 
 .section ".text"
 .align	3
@@ -23,7 +24,7 @@ switch_to:
 	ldr x9, [x1, #CPU_CONTEXT_SP]
 	mov sp, x9
 	ldr lr, [x1, #CPU_CONTEXT_PC]
-	
+
 	msr tpidr_el1, x1
 	cbnz x2, 1f
 	msr daifclr, #2

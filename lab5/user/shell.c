@@ -30,6 +30,7 @@ static void timestamp_cmd(void);
 //static void reboot_cmd(void);
 static void exc_cmd();
 static void irq_cmd();
+static void exit_cmd();
 
 static enum ANSI_ESC decode_csi_key();
 static enum ANSI_ESC decode_ansi_escape();
@@ -62,6 +63,10 @@ static const struct shell_cmd shell_cmds[] = {
 	{	.cmd = "irq",
 		.description = "Enable timer",
 		.cmd_fn_ptr = irq_cmd,
+	},
+	{	.cmd = "exit",
+		.description = "Exit this program.",
+		.cmd_fn_ptr = exit_cmd,
 	},	
 	{},
 };
@@ -121,6 +126,11 @@ static void exc_cmd()
 static void irq_cmd()
 {
 	irq_test();
+}
+
+static void exit_cmd()
+{
+	exit(0);
 }
 
 static enum ANSI_ESC decode_csi_key() 

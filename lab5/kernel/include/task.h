@@ -5,6 +5,7 @@
 #include "core.h"
 #include "list.h"
 #include "exception.h"
+#include "page.h"
 #endif
 
 #define TASK_POOL_SIZE	64
@@ -13,8 +14,7 @@
 
 #define KERNEL_STACK_RESERVED_SIZE	(KERNEL_STACK_SIZE * TASK_POOL_SIZE)
 
-#define USER_STACK_SIZE			0x1000
-#define USER_STACK_RESERVED_SIZE	(USER_STACK_SIZE * TASK_POOL_SIZE)
+#define USER_STACK_VIRT_ADDR		0x0000ffffffffe000
 
 #define DEFAULT_EPOCH		10
 
@@ -56,11 +56,12 @@ struct task {
 	uint64_t			reserved_user_sp;		// 8 bytes, offset 112
 	uint64_t			reserved_kernel_sp;		// 8 bytes, offset 120
 	uint64_t			unblock_time;			// 8 bytes, offset 128
-	struct list_head	*runnable_task_parent;	// 8 bytes, offset 136	
+	struct list_head	*runnable_task_parent;	// 8 bytes, offset 136
 	struct list_head	list;					// 16 bytes, offset 144
 	int					task_id;				// 4 bytes, offset 160
 	int					epoch;					// 4 bytes, offset 164
-	enum task_state		state;					// 8 bytes, offset 168	
+	enum task_state		state;					// 8 bytes, offset 168
+	struct page			*user_pgd_page;
 	// Total size: 176 bytes
 } __attribute__((aligned(16)));
 
@@ -73,7 +74,8 @@ void task_init();
 void task_privilege_task_create(void(*func)(),
 		enum task_priority priority);
 
-void task_do_exec(void(*func)());
+void task_do_exec(uint64_t binary_start, uint64_t binary_size,
+		uint64_t virtual_addr_start);
 
 void task_exit(int status);
 

@@ -41,7 +41,7 @@ struct pt_regs{
 	uint64_t	sp;
 };
 
-extern void ret_to_user(void(*func)());
+extern void ret_to_user(uint64_t entry_addr);
 
 #endif
 

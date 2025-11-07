@@ -46,9 +46,10 @@ void run_shell()
 		(uint64_t)&_binary_shell_bin_end,
 		(uint64_t)&_binary_shell_bin_size
 		);
-	
+	const uint64_t virt_addr = 0x80000;
+	task_do_exec((uint64_t)&_binary_shell_bin_start, (uint64_t)&_binary_shell_bin_size,
+			virt_addr);
 
-		
 	task_exit(0);
 }
 

@@ -7,10 +7,15 @@
 
 #define PD_TABLE			0b11
 #define PD_BLOCK			0b01
-#define PD_ACCESS			(1 << 10)
+#define PD_ACCESS			(1ULL << 10)
+#define PD_USER				(1ULL << 6)
+#define UXN_DISABLE		(1ULL << 54)
+#define PXN_DISABLE		(1ULL << 53)
 #define BOOT_PGD_ATTR	PD_TABLE
 #define BOOT_PUD_ATTR	PD_TABLE
 #define BOOT_PMD_ATTR	(PD_BLOCK | PD_ACCESS)
+#define USER_PTE_ATTR	(PD_TABLE | PD_ACCESS | PD_USER | PXN_DISABLE)
+
 
 #define PGD_SHIFT		39
 #define PGD_SIZE		(1ULL << PGD_SHIFT)
@@ -88,6 +93,7 @@
 
 #include "core.h"
 
+struct page;
 
 typedef uint64_t pgd_t;
 typedef uint64_t pud_t;
@@ -96,6 +102,16 @@ typedef uint64_t pte_t;
 
 void mmu_create_pgd_mapping(pgd_t *pgdir, uint64_t phys,
 		uint64_t virt, uint64_t size, uint64_t prot);
+
+void mmu_walk_page_table(pgd_t *pgdir, uint64_t virt);
+
+int mmu_copy_to_user(pgd_t *pgdir, uint64_t user_dst,
+		const void *kernel_src, size_t len);
+
+int mmu_copy_from_user(pgd_t *pgdir, void *kernel_dst,
+		uint64_t user_src, size_t len);
+
+void mmu_pgd_free(struct page *pgd_page);
 
 
 #endif

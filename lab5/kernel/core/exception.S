@@ -1,6 +1,7 @@
 #include "exception.h"
 #include "sys_regs.h"
 #include "asm-offsets.h"
+#include "mmu.h"
 
 	.macro kernel_ventry, el:req, ht:req, regsize:req, label:req
 		.align 7
@@ -93,9 +94,36 @@
 		
 		stp x30, x21, [sp, #S_LR]
 		stp x22, x23, [sp, #S_SPSR]
+
+		// Ensure TTBR0 points to the kernel identity map so MMIO is accessible
+		ldr x24, =__id_map_pgd_start
+		ldr x25, =__kernel_virtual_base
+		sub x24, x24, x25
+		dsb ish
+		msr ttbr0_el1, x24
+		tlbi vmalle1is
+		dsb ish
+		isb
 	.endm
 
 	.macro kernel_exit
+		mrs x0, tpidr_el1					//get current task
+		ldr x1, [x0, #USER_PGD_PAGE]
+		cbnz x1, 1f 
+		ldr x1, =__id_map_pgd_start
+		ldr x2, =__kernel_virtual_base
+		sub x1, x1, x2
+		b 2f
+1:
+		ldr x1, [x1, #PAGE_NUM]
+		lsl x1, x1, #PTE_SHIFT
+2:	
+		dsb ish				// ensure write has completed
+		msr ttbr0_el1, x1	// switch translation based address.
+		tlbi vmalle1is		// invalidate all TLB entries
+		dsb ish				// ensure completion of TLB invalidatation
+		isb 				// clear pipeline
+				
 		ldp x22, x23, [sp, #S_SPSR]
 		ldp x30, x21, [sp, #S_LR]
 		
@@ -119,6 +147,7 @@
 		ldp x2, x3, [sp, #S_X2]
 		ldp x0, x1, [sp, #S_X0]
 		add sp, sp, #PT_REGS_SIZE
+		
 		eret
 	.endm
 
@@ -160,7 +189,7 @@
 			bl lock_irq_save
 			
 			mov x2, x0
-
+			
 			mrs x0, tpidr_el1					//get current task
 			ldr x21, [sp, #0]					//get the function pointer
 			ldr x22, =SPSR_EL1_EL0

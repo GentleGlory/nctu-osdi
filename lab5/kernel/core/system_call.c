@@ -8,8 +8,8 @@
 #include "context.h"
 #include "delay.h"
 #include "scheduler.h"
+#include "mmu.h"
 
-//Handler
 static void system_call_time_stamp_handler()
 {
 	struct rational r = {0, 0};
@@ -31,18 +31,43 @@ static void system_call_user_task_do_schedule_handler()
 }
 
 static size_t system_call_uart_read_handler(char buf[], size_t size)
-{
-	return uart_read(buf, size);
+{	
+	char temp[SYSTEM_CALL_UART_BUF_SIZE];
+	size_t temp_size = size > SYSTEM_CALL_UART_BUF_SIZE ? SYSTEM_CALL_UART_BUF_SIZE : size;
+	size_t ret = 0;
+	struct task *cur = current;
+	pgd_t *pgdir = NULL;
+
+	ret = uart_read(temp, temp_size);
+
+	if (ret) {
+		pgdir = (pgd_t *)PHYS_TO_KERNEL_VIRT(PAGE_FRAME_NUM_TO_PHYS(cur->user_pgd_page->page_num));
+		mmu_copy_to_user(pgdir, (uint64_t) buf, temp, ret);
+	}
+
+	return ret;
 }
 
 static size_t system_call_uart_write_handler(const char buf[], size_t size)
 {
-	return uart_write(buf, size);
+	char temp[SYSTEM_CALL_UART_BUF_SIZE];
+	size_t temp_size = size > SYSTEM_CALL_UART_BUF_SIZE ? SYSTEM_CALL_UART_BUF_SIZE : size;
+	size_t ret = 0;
+	struct task *cur = current;
+	pgd_t *pgdir = NULL;
+
+	pgdir = (pgd_t *)PHYS_TO_KERNEL_VIRT(PAGE_FRAME_NUM_TO_PHYS(cur->user_pgd_page->page_num));
+
+	mmu_copy_from_user(pgdir, temp, (uint64_t)buf, temp_size);
+	
+	ret = uart_write(temp, size);
+
+	return ret;
 }
 
 static int system_call_exec_handler(struct pt_regs *pt_regs)
 {
-	task_do_exec((void(*)())pt_regs->regs[0]);
+	//task_do_exec((void(*)())pt_regs->regs[0]);
 	return 0;
 }
 

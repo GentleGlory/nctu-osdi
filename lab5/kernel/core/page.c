@@ -93,3 +93,22 @@ void *page_alloc_pgtable()
 
 	return ret;
 }
+
+void page_free_by_page_num(uint64_t page_num)
+{
+	uint64_t irq_state;
+	
+	if (page_num >= PAGE_TOTAL_NUM) {
+		printf("\rInvalid page nume:%llu\n", page_num);
+		return;
+	}
+	
+	irq_state = lock_irq_save();
+	
+	page[page_num].refcount = 0;
+	page[page_num].used = 0;
+	
+	list_add_tail(&free_list, &page[page_num].list);
+
+	lock_irq_restore(irq_state);
+}

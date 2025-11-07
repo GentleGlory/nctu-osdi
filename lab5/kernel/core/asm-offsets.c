@@ -37,6 +37,7 @@ int main(void)
 	DEFINE(TASK_STATE, offsetof(struct task, state));
 	DEFINE(RESERVED_USER_SP, offsetof(struct task, reserved_user_sp));
 	DEFINE(RESERVED_KERNEL_SP, offsetof(struct task, reserved_kernel_sp));
+	DEFINE(USER_PGD_PAGE, offsetof(struct task, user_pgd_page));
 	BLANK();
 
 	DEFINE(S_X0, offsetof(struct pt_regs, regs[0]));
@@ -74,6 +75,9 @@ int main(void)
 	DEFINE(S_SPSR, offsetof(struct pt_regs, spsr));
 	DEFINE(S_USER_SP, offsetof(struct pt_regs, sp));
 	DEFINE(PT_REGS_SIZE, sizeof(struct pt_regs));
-	
+	BLANK();
+
+	DEFINE(PAGE_NUM, offsetof(struct page, page_num));
+
 	return 0;
 }

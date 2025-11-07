@@ -1,10 +1,11 @@
 #ifndef _PAGE_H
 #define _PAGE_H
 
+#include "mmu.h"
+
 #ifndef __ASM__
 
 #include "core.h"
-#include "mmu.h"
 #include "list.h"
 
 extern char __kernel_virtual_base[];
@@ -30,6 +31,7 @@ struct page {
 void page_init();
 struct page *page_alloc();
 void page_free(struct page *page);
+void page_free_by_page_num(uint64_t page_num);
 
 void *page_alloc_pgtable();
 

@@ -1,6 +1,5 @@
 #include "type.h"
-#include "string.h"
-#include "system_call.h"
+#include "user_lib.h"
 
 static void vprintf(const char* fmt, __builtin_va_list args);
 
@@ -293,7 +292,7 @@ static void vprintf(const char* fmt, __builtin_va_list args)
 	}
 
 	buffer[buf_pos] = '\0';
-	system_call_uart_write(buffer, buf_pos);
+	uart_write(buffer, buf_pos);
 }
 
 void printf(const char* fmt, ...)

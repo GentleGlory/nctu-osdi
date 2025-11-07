@@ -43,20 +43,20 @@ enable_mmu:
 	ldr x0, =BOOT_VA_START
 	ldr x1, =BOOT_VA_START
 	ldr x2, =(BOOT_VA_START + BOOT_GPU_PERI_BASE - 1)
-	ldr x3, =MAIR_NORMAL_NOCACHE
+	ldr x3, =MAIR_IDX_NORMAL_NOCACHE
 	bl mapping_pmd
 
 
 	ldr x0, =(BOOT_VA_START + BOOT_GPU_PERI_BASE)
 	ldr x1, =(BOOT_VA_START + BOOT_GPU_PERI_BASE)
 	ldr x2, =(BOOT_VA_START + BOOT_GPU_PERI_BASE + BOOT_GPU_PERI_SIZE - 1)
-	ldr x3, =MAIR_DEVICE_nGnRnE
+	ldr x3, =MAIR_IDX_DEVICE_nGnRnE
 	bl mapping_pmd
 
 	ldr x0, =(BOOT_VA_START + BOOT_LOCAL_PERI_BASE)
 	ldr x1, =(BOOT_VA_START + BOOT_LOCAL_PERI_BASE)
 	ldr x2, =(BOOT_VA_START + BOOT_LOCAL_PERI_BASE + BOOT_LOCAL_PERI_SIZE - 1)
-	ldr x3, =MAIR_DEVICE_nGnRnE
+	ldr x3, =MAIR_IDX_DEVICE_nGnRnE
 	bl mapping_pmd
 
 	dsb ishst
