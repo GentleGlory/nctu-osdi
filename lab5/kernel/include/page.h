@@ -35,6 +35,8 @@ void page_free_by_page_num(uint64_t page_num);
 
 void *page_alloc_pgtable();
 
+uint64_t page_remain_page_num();
+
 #endif /* __ASM__ */
 
 #endif

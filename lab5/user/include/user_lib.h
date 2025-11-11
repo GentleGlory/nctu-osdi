@@ -13,5 +13,5 @@ void exit(int status);
 void delay(uint64_t ms);
 int get_task_id();
 void exc_test();
-
+uint64_t remain_page_num();
 #endif

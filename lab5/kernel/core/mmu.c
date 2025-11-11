@@ -396,3 +396,172 @@ void mmu_pgd_free(struct page *pgd_page)
 
 	page_free(pgd_page);
 }
+
+static int mmu_copy_pte(pte_t *pte_dest, pte_t *pte_src)
+{
+	for (int i = 0; i < PTRS_PER_PTE; i++) {
+		pte_t entry = pte_src[i];
+
+		if (entry == 0) {
+			pte_dest[i] = 0;
+			continue;
+		}
+
+		struct page *page = page_alloc();
+		if (page == NULL)
+			goto fail;
+
+		uint64_t new_phys = PAGE_FRAME_NUM_TO_PHYS(page->page_num);
+		void *dst = PHYS_TO_KERNEL_VIRT(new_phys);
+		void *src = mmu_entry_to_kva(entry);
+
+		memcpy(dst, src, PAGE_SIZE);
+
+		pte_dest[i] = new_phys | mmu_entry_attrs(entry);
+	}
+
+	return 0;
+
+fail:
+	for (int i = 0; i < PTRS_PER_PTE; i++) {
+		if (pte_dest[i] != 0) {
+			uint64_t phys = mmu_entry_phys(pte_dest[i]);
+			uint64_t page_num = PHYS_TO_PAGE_FRAME_NUM(phys);
+			page_free_by_page_num(page_num);
+			pte_dest[i] = 0;
+		}
+	}
+	return -1;
+}
+
+static int mmu_copy_pmd(pmd_t *pmd_dest, pmd_t *pmd_src)
+{
+	for (int i = 0; i < PTRS_PER_PMD; i++) {
+		pmd_t entry = pmd_src[i];
+
+		if (entry == 0) {
+			pmd_dest[i] = 0;
+			continue;
+		}
+
+		if (!mmu_entry_is_table(entry)) {
+			printf("\rmmu_copy_pmd: unsupported PMD entry type\n");
+			goto fail;
+		}
+
+		void *pte_page = page_alloc_pgtable();
+		if (pte_page == NULL)
+			goto fail;
+
+		pte_t *pte_dest = (pte_t *)pte_page;
+		pte_t *pte_src = (pte_t *)mmu_entry_to_kva(entry);
+
+		if (mmu_copy_pte(pte_dest, pte_src)) {
+			mmu_pte_free(pte_dest);
+			goto fail;
+		}
+
+		uint64_t pte_phys = KERNEL_VIRT_TO_PHYS((uint64_t)pte_page);
+		pmd_dest[i] = pte_phys | mmu_entry_attrs(entry);
+	}
+
+	return 0;
+
+fail:
+	for (int i = 0; i < PTRS_PER_PMD; i++) {
+		if (pmd_dest[i] != 0) {
+			pte_t *pte = (pte_t *)mmu_entry_to_kva(pmd_dest[i]);
+			mmu_pte_free(pte);
+			pmd_dest[i] = 0;
+		}
+	}
+	return -1;
+}
+
+static int mmu_copy_pud(pud_t *pud_dest, pud_t *pud_src)
+{
+	for (int i = 0; i < PTRS_PER_PUD; i++) {
+		pud_t entry = pud_src[i];
+
+		if (entry == 0) {
+			pud_dest[i] = 0;
+			continue;
+		}
+
+		if (!mmu_entry_is_table(entry)) {
+			printf("\rmmu_copy_pud: unsupported PUD entry type\n");
+			goto fail;
+		}
+
+		void *pmd_page = page_alloc_pgtable();
+		if (pmd_page == NULL)
+			goto fail;
+
+		pmd_t *pmd_dest = (pmd_t *)pmd_page;
+		pmd_t *pmd_src = (pmd_t *)mmu_entry_to_kva(entry);
+
+		if (mmu_copy_pmd(pmd_dest, pmd_src)) {
+			mmu_pmd_free(pmd_dest);
+			goto fail;
+		}
+
+		uint64_t pmd_phys = KERNEL_VIRT_TO_PHYS((uint64_t)pmd_page);
+		pud_dest[i] = pmd_phys | mmu_entry_attrs(entry);
+	}
+
+	return 0;
+
+fail:
+	for (int i = 0; i < PTRS_PER_PUD; i++) {
+		if (pud_dest[i] != 0) {
+			pmd_t *pmd = (pmd_t *)mmu_entry_to_kva(pud_dest[i]);
+			mmu_pmd_free(pmd);
+			pud_dest[i] = 0;
+		}
+	}
+	return -1;
+}
+
+int mmu_copy_pgd(pgd_t *pgdir_dest, pgd_t *pgdir_src)
+{
+	for (int i = 0; i < PTRS_PER_PGD; i++) {
+		pgd_t entry = pgdir_src[i];
+
+		if (entry == 0) {
+			pgdir_dest[i] = 0;
+			continue;
+		}
+
+		if (!mmu_entry_is_table(entry)) {
+			printf("\rmmu_copy_pgd: unsupported PGD entry type\n");
+			goto fail;
+		}
+
+		void *pud_page = page_alloc_pgtable();
+		if (pud_page == NULL)
+			goto fail;
+
+		pud_t *pud_dest = (pud_t *)pud_page;
+		pud_t *pud_src = (pud_t *)mmu_entry_to_kva(entry);
+
+		if (mmu_copy_pud(pud_dest, pud_src)) {
+			mmu_pud_free(pud_dest);
+			goto fail;
+		}
+
+		uint64_t pud_phys = KERNEL_VIRT_TO_PHYS((uint64_t)pud_page);
+		pgdir_dest[i] = pud_phys | mmu_entry_attrs(entry);
+	}
+
+	return 0;
+
+fail:
+	for (int i = 0; i < PTRS_PER_PGD; i++) {
+		if (pgdir_dest[i] != 0) {
+			pud_t *pud = (pud_t *)mmu_entry_to_kva(pgdir_dest[i]);
+			mmu_pud_free(pud);
+			pgdir_dest[i] = 0;
+		}
+	}
+	return -1;
+}

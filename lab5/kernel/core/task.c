@@ -131,7 +131,7 @@ void task_do_exec(uint64_t binary_start, uint64_t binary_size,
 
 		mem_phys_addr = PAGE_FRAME_NUM_TO_PHYS(mem->page_num);
 		mem_virtual_addr = (uint64_t)PHYS_TO_KERNEL_VIRT(mem_phys_addr);
-		memset((void *)mem_virtual_addr, 0, PAGE_SIZE);
+		//memset((void *)mem_virtual_addr, 0, PAGE_SIZE);
 
 		mmu_create_pgd_mapping(pgdir, mem_phys_addr, extra_virtual_addr,
 				PAGE_SIZE, (USER_PTE_ATTR | MAIR_IDX_NORMAL_NOCACHE << 2));
@@ -155,7 +155,7 @@ void task_do_exec(uint64_t binary_start, uint64_t binary_size,
 	}
 
 	cur->user_pgd_page = pgd;
-	
+
 	ret_to_user(virtual_addr_start);
 	//Should not be here
 	return;
@@ -202,15 +202,16 @@ void task_zombie_reaper()
 				t->runnable_task_parent = NULL;
 				INIT_LIST_HEAD(&t->list);
 				// Force state assignment to happen by using volatile cast
-				*((volatile enum task_state *)&t->state) = EXIT;			
+				*((volatile enum task_state *)&t->state) = EXIT;
 			}
 		}
 		delay(5000);
 	}
 }
 
-//Used by fork. not thread safe
-void task_prepare_fork(struct pt_regs *src_pr_regs, uint64_t sp_address, uint64_t lr_address)
+//Used by fork.
+void task_prepare_fork(struct pt_regs *src_pt_regs, uint64_t sp_address, 
+	uint64_t lr_address)
 {
 	uint64_t irq_state;
 	struct task *dest = NULL;
@@ -220,8 +221,9 @@ void task_prepare_fork(struct pt_regs *src_pr_regs, uint64_t sp_address, uint64_
 	struct pt_regs *dest_pt_regs = NULL;
 	int64_t offset = 0;
 	unsigned char *kernel_reserved_sp = &__kernel_stack_start;
-	//unsigned char *user_reserved_sp = &__user_stack_start;
-
+	struct page *pgd_page = NULL;
+	pgd_t *pgd_dest = NULL, *pgd_src = NULL;
+	
 	irq_state = lock_irq_save();
 
 	for (int i = 0; i < TASK_POOL_SIZE; i++) {
@@ -233,7 +235,7 @@ void task_prepare_fork(struct pt_regs *src_pr_regs, uint64_t sp_address, uint64_
 
 	if (dest == NULL) {
 		printf("\rCannot find an usable task\n");
-		src_pr_regs->regs[0] = (uint64_t) -1;
+		src_pt_regs->regs[0] = (uint64_t) -1;
 		goto Failed;
 	}
 
@@ -252,41 +254,55 @@ void task_prepare_fork(struct pt_regs *src_pr_regs, uint64_t sp_address, uint64_
 	src_sp = kernel_reserved_sp + KERNEL_STACK_SIZE * src->task_id;
 	memcpy(dest_sp, src_sp, KERNEL_STACK_SIZE);
 
-	//User sp
-	//dest_sp = user_reserved_sp + USER_STACK_SIZE * dest->task_id;
-	//src_sp = user_reserved_sp + USER_STACK_SIZE * src->task_id;
-	//memcpy(dest_sp, src_sp, USER_STACK_SIZE);
-
-	offset = (unsigned char *)src->reserved_kernel_sp - (unsigned char *)src_pr_regs;
-	printf("\rpt_regs offset:%lld\n", offset);
+	
+	offset = (unsigned char *)src->reserved_kernel_sp - (unsigned char *)src_pt_regs;
+	//printf("\rpt_regs offset:%lld\n", offset);
 	dest_pt_regs = (struct pt_regs *)((unsigned char *) dest->reserved_kernel_sp - offset);
-
-	offset = (unsigned char *)src->reserved_user_sp - (unsigned char *)src_pr_regs->sp;
-	printf("\ruser sp offset:%lld\n", offset);
-	dest_pt_regs->sp = (uint64_t)((unsigned char *)dest->reserved_user_sp - offset);
-
-	if (src_pr_regs->regs[29]) {
-		offset = (unsigned char *)src->reserved_user_sp - (unsigned char *)src_pr_regs->regs[29];
-		printf("\ruser fp offset:%lld\n", offset);
-		dest_pt_regs->regs[29] = (uint64_t)((unsigned char *)dest->reserved_user_sp - offset);
-	}
 
 	dest->cpu_context.pc = lr_address;
 	offset = (unsigned char *)src->reserved_kernel_sp - (unsigned char *)sp_address;
-	printf("\rkernel sp offset:%lld\n", offset);
+	//printf("\rkernel sp offset:%lld\n", offset);
 	dest->cpu_context.sp = (uint64_t)((unsigned char *)dest->reserved_kernel_sp - offset);
 
 	if (src->cpu_context.fp) {
 		offset = (unsigned char *)src->reserved_kernel_sp - (unsigned char *)src->cpu_context.fp;
-		printf("\rkernel fp offset:%lld\n", offset);
 		dest->cpu_context.fp = (uint64_t)((unsigned char *)dest->reserved_kernel_sp - offset);
 	}
 
+	//copy pgd
+	if (src->user_pgd_page != NULL) {
+		pgd_page = page_alloc();
+		if (pgd_page == NULL) {
+			goto Failed;
+		}
+
+		pgd_dest = (pgd_t *) PHYS_TO_KERNEL_VIRT(PAGE_FRAME_NUM_TO_PHYS(pgd_page->page_num));
+		pgd_src = (pgd_t *) PHYS_TO_KERNEL_VIRT(PAGE_FRAME_NUM_TO_PHYS(src->user_pgd_page->page_num));
+		
+		if (mmu_copy_pgd(pgd_dest, pgd_src)) {
+			goto Failed;
+		}
+
+		dest->user_pgd_page = pgd_page;
+
+	} else {
+		dest->user_pgd_page = NULL;
+	}
+	
 	scheduler_add_task_to_queue(dest, RUNNABLE_TASK_CURRENT);
 
 	dest_pt_regs->regs[0] = 0;
-	src_pr_regs->regs[0] = dest->task_id;
+	src_pt_regs->regs[0] = dest->task_id;
+	
+	lock_irq_restore(irq_state);
+	return;
+
 Failed:
+	if (dest != NULL) {
+		dest->state = EXIT;
+		dest->user_pgd_page = NULL;
+	}
+
 	lock_irq_restore(irq_state);
 }
 

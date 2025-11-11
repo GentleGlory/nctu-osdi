@@ -1,8 +1,10 @@
 #include "page.h"
 #include "string.h"
 #include "lock.h"
+#include "context.h"
 
 static struct page page[PAGE_TOTAL_NUM];
+static uint64_t remain_page_num;
 
 extern char __kernel_start[];
 extern char __kernel_end[];
@@ -14,7 +16,10 @@ void page_init()
 	uint64_t kernel_start_phy = KERNEL_VIRT_TO_PHYS(__kernel_start);
 	uint64_t kernel_end_phy = KERNEL_VIRT_TO_PHYS(__kernel_end);
 
-	uint32_t cnt = 0;
+	kernel_start_phy &= PAGE_MASK;
+	kernel_end_phy = PAGE_ALIGN(kernel_end_phy);
+
+	remain_page_num = 0;
 
 	for (int i = 0; i < PAGE_TOTAL_NUM; i++) {
 		page[i].refcount = 0;
@@ -26,14 +31,14 @@ void page_init()
 
 		if (page_phy < kernel_start_phy || page_phy >= kernel_end_phy) {
 			list_add_tail(&page[i].list, &free_list);
-			cnt ++;
+			remain_page_num ++;
 		} else {
 			page[i].refcount = 1;
 			page[i].used = 1;
 		}
 	}
 
-	printf("\rTotal page frame:%u, free page num:%u\n", PAGE_TOTAL_NUM, cnt);
+	printf("\rTotal page frame:%u, free page num:%llu\n", PAGE_TOTAL_NUM, remain_page_num);
 }
 
 struct page *page_alloc()
@@ -41,7 +46,7 @@ struct page *page_alloc()
 	struct page *ret = NULL;
 	uint64_t irq_state;
 	uint64_t addr;
-
+	
 	irq_state = lock_irq_save();
 
 	if (!list_empty(&free_list)) {
@@ -57,7 +62,7 @@ struct page *page_alloc()
 		addr = (uint64_t) PHYS_TO_KERNEL_VIRT(addr);
 
 		memset((void *) addr, 0, PAGE_SIZE);
-		
+		remain_page_num --;
 	} else {
 		lock_irq_restore(irq_state);
 	}
@@ -73,7 +78,8 @@ void page_free(struct page *page)
 	
 	page->refcount = 0;
 	page->used = 0;
-	list_add_tail(&free_list, &page->list);
+	list_add_tail(&page->list, &free_list);
+	remain_page_num ++;
 
 	lock_irq_restore(irq_state);
 }
@@ -96,19 +102,15 @@ void *page_alloc_pgtable()
 
 void page_free_by_page_num(uint64_t page_num)
 {
-	uint64_t irq_state;
-	
 	if (page_num >= PAGE_TOTAL_NUM) {
 		printf("\rInvalid page nume:%llu\n", page_num);
 		return;
 	}
 	
-	irq_state = lock_irq_save();
-	
-	page[page_num].refcount = 0;
-	page[page_num].used = 0;
-	
-	list_add_tail(&free_list, &page[page_num].list);
+	page_free(&page[page_num]);
+}
 
-	lock_irq_restore(irq_state);
+uint64_t page_remain_page_num()
+{
+	return remain_page_num;
 }

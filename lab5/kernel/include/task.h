@@ -65,6 +65,25 @@ struct task {
 	// Total size: 176 bytes
 } __attribute__((aligned(16)));
 
+#define DEFINE_USER_PROGRAM_RUNNER(user_prog_name)						\
+	extern unsigned char _binary_##user_prog_name##_bin_start[];		\
+	extern unsigned char _binary_##user_prog_name##_bin_end[];			\
+	extern unsigned char _binary_##user_prog_name##_bin_size[];			\
+	static void run_##user_prog_name(void)								\
+	{																	\
+		const uint64_t binary_start =									\
+			(uint64_t)_binary_##user_prog_name##_bin_start;				\
+		const uint64_t binary_end =										\
+			(uint64_t)_binary_##user_prog_name##_bin_end;				\
+		const uint64_t binary_size =									\
+			(uint64_t)_binary_##user_prog_name##_bin_size;				\
+		printf("\rbinary start:%llx, end:%llx, size:%llx\n",			\
+			binary_start, binary_end, binary_size);						\
+		const uint64_t virt_addr = 0x80000;								\
+		task_do_exec(binary_start, binary_size, virt_addr);				\
+		task_exit(0);													\
+	}
+
 extern struct task task_pool[TASK_POOL_SIZE];
 
 extern struct task *idle_task;

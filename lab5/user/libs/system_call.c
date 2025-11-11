@@ -65,6 +65,11 @@ int system_call_get_task_id()
 	return (int)system_call_run(SYS_CALL_GET_TASK_ID, 0, 0, 0, 0, 0, 0);
 }
 
+uint64_t system_call_remain_page_num()
+{
+	return (uint64_t)system_call_run(SYS_CALL_GET_REMAIN_PAGE_NUM, 0, 0, 0, 0, 0, 0);
+}
+
 static int64_t system_call_run(uint32_t sys_call_num,
 	uint64_t arg1, uint64_t arg2, uint64_t arg3,
 	uint64_t arg4, uint64_t arg5, uint64_t arg6)

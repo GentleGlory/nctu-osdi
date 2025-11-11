@@ -3,6 +3,9 @@
 #include "irq.h"
 #include "system_call.h"
 #include "core.h"
+#include "task.h"
+#include "context.h"
+#include "page.h"
 
 void show_exception_status(uint64_t type, uint64_t esr, uint64_t elr)
 {
@@ -49,8 +52,7 @@ void el0_sync_exc_router(struct pt_regs* ptregs)
 			esr, ptregs->elr);
 		uint64_t far = read_sys_reg(far_el1);
 		printf("\rFAR 0x%llx\n", far);
-		// Hang the system for debugging
-		while(1);
+		task_exit(0);
 	}
 }
 

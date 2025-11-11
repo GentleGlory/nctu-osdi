@@ -168,9 +168,136 @@ add_custom_command(
     COMMENT "Embedding shell.bin into ${SHELL_BIN_OBJECT}"
 )
 
+# Build test_command1 program
+set(TEST_COMMAND1_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/user/test_command1.c")
+
+add_executable(test_command1.elf
+    ${TEST_COMMAND1_SOURCE}
+    ${USER_C_SOURCES}
+    ${USER_ASM_SOURCES}
+)
+
+target_include_directories(test_command1.elf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/user/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/include/uapi
+)
+
+target_compile_options(test_command1.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles )
+
+set_target_properties(test_command1.elf PROPERTIES
+    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/user/linker.ld"
+)
+
+add_custom_command(
+    TARGET test_command1.elf POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary test_command1.elf test_command1.bin
+    COMMENT "Creating binary image test_command1.bin"
+    BYPRODUCTS test_command1.bin
+)
+
+set(TEST_COMMAND1_BIN "${CMAKE_CURRENT_BINARY_DIR}/test_command1.bin")
+set(TEST_COMMAND1_BIN_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/test_command1_bin.o")
+
+add_custom_command(
+    OUTPUT ${TEST_COMMAND1_BIN_OBJECT}
+    COMMAND ${CMAKE_LINKER} -r -b binary test_command1.bin -o test_command1_bin.o
+    DEPENDS ${TEST_COMMAND1_BIN}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Embedding test_command1.bin into ${TEST_COMMAND1_BIN_OBJECT}"
+)
+
+# Build test_command2 program
+set(TEST_COMMAND2_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/user/test_command2.c")
+
+add_executable(test_command2.elf
+    ${TEST_COMMAND2_SOURCE}
+    ${USER_C_SOURCES}
+    ${USER_ASM_SOURCES}
+)
+
+target_include_directories(test_command2.elf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/user/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/include/uapi
+)
+
+target_compile_options(test_command2.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles )
+
+set_target_properties(test_command2.elf PROPERTIES
+    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/user/linker.ld"
+)
+
+add_custom_command(
+    TARGET test_command2.elf POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary test_command2.elf test_command2.bin
+    COMMENT "Creating binary image test_command2.bin"
+    BYPRODUCTS test_command2.bin
+)
+
+set(TEST_COMMAND2_BIN "${CMAKE_CURRENT_BINARY_DIR}/test_command2.bin")
+set(TEST_COMMAND2_BIN_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/test_command2_bin.o")
+
+add_custom_command(
+    OUTPUT ${TEST_COMMAND2_BIN_OBJECT}
+    COMMAND ${CMAKE_LINKER} -r -b binary test_command2.bin -o test_command2_bin.o
+    DEPENDS ${TEST_COMMAND2_BIN}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Embedding test_command2.bin into ${TEST_COMMAND2_BIN_OBJECT}"
+)
+
+# Build test_command3 program
+set(TEST_COMMAND3_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/user/test_command3.c")
+
+add_executable(test_command3.elf
+    ${TEST_COMMAND3_SOURCE}
+    ${USER_C_SOURCES}
+    ${USER_ASM_SOURCES}
+)
+
+target_include_directories(test_command3.elf PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/user/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel/include/uapi
+)
+
+target_compile_options(test_command3.elf PRIVATE -fno-zero-initialized-in-bss -nostdlib -nostartfiles )
+
+set_target_properties(test_command3.elf PROPERTIES
+    LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/user/linker.ld"
+)
+
+add_custom_command(
+    TARGET test_command3.elf POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary test_command3.elf test_command3.bin
+    COMMENT "Creating binary image test_command3.bin"
+    BYPRODUCTS test_command3.bin
+)
+
+set(TEST_COMMAND3_BIN "${CMAKE_CURRENT_BINARY_DIR}/test_command3.bin")
+set(TEST_COMMAND3_BIN_OBJECT "${CMAKE_CURRENT_BINARY_DIR}/test_command3_bin.o")
+
+add_custom_command(
+    OUTPUT ${TEST_COMMAND3_BIN_OBJECT}
+    COMMAND ${CMAKE_LINKER} -r -b binary test_command3.bin -o test_command3_bin.o
+    DEPENDS ${TEST_COMMAND3_BIN}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Embedding test_command3.bin into ${TEST_COMMAND3_BIN_OBJECT}"
+)
+
+
 set_source_files_properties(${SHELL_BIN_OBJECT} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
 add_dependencies(kernel_real.elf shell.elf)
 target_sources(kernel_real.elf PRIVATE ${SHELL_BIN_OBJECT})
+
+set_source_files_properties(${TEST_COMMAND1_BIN_OBJECT} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
+add_dependencies(kernel_real.elf test_command1.elf)
+target_sources(kernel_real.elf PRIVATE ${TEST_COMMAND1_BIN_OBJECT})
+
+set_source_files_properties(${TEST_COMMAND2_BIN_OBJECT} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
+add_dependencies(kernel_real.elf test_command2.elf)
+target_sources(kernel_real.elf PRIVATE ${TEST_COMMAND2_BIN_OBJECT})
+
+set_source_files_properties(${TEST_COMMAND3_BIN_OBJECT} PROPERTIES GENERATED TRUE EXTERNAL_OBJECT TRUE)
+add_dependencies(kernel_real.elf test_command3.elf)
+target_sources(kernel_real.elf PRIVATE ${TEST_COMMAND3_BIN_OBJECT})
 
 # Custom target for running bootloader in QEMU
 add_custom_target(run

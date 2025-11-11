@@ -45,3 +45,8 @@ void exc_test()
 {
 	system_call_test();
 }
+
+uint64_t remain_page_num()
+{
+	return system_call_remain_page_num();
+}

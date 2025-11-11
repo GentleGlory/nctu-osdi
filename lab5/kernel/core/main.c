@@ -12,9 +12,6 @@
 #include "system_call.h"
 #include "page.h"
 
-extern unsigned char _binary_shell_bin_start[]; 
-extern unsigned char _binary_shell_bin_end[]; 
-extern unsigned char _binary_shell_bin_size[]; 
 
 // -----------below is kernel code-------------
 
@@ -39,19 +36,10 @@ void foo_1()
 	}
 }
 
-void run_shell()
-{
-	printf("\rbinary start:%llx, end:%llx, size:%llx\n",
-		(uint64_t)&_binary_shell_bin_start,
-		(uint64_t)&_binary_shell_bin_end,
-		(uint64_t)&_binary_shell_bin_size
-		);
-	const uint64_t virt_addr = 0x80000;
-	task_do_exec((uint64_t)&_binary_shell_bin_start, (uint64_t)&_binary_shell_bin_size,
-			virt_addr);
-
-	task_exit(0);
-}
+DEFINE_USER_PROGRAM_RUNNER(shell);
+DEFINE_USER_PROGRAM_RUNNER(test_command1);
+DEFINE_USER_PROGRAM_RUNNER(test_command2);
+DEFINE_USER_PROGRAM_RUNNER(test_command3);
 
 void main(void)
 {
@@ -76,6 +64,9 @@ void main(void)
 		task_privilege_task_create(foo_1, PRIORITY_NORMAL);
 	}
 	task_privilege_task_create(run_shell, PRIORITY_LOW);
+	task_privilege_task_create(run_test_command1, PRIORITY_LOW);
+	task_privilege_task_create(run_test_command2, PRIORITY_LOW);
+	task_privilege_task_create(run_test_command3, PRIORITY_LOW);
 	task_privilege_task_create(task_zombie_reaper, PRIORITY_LOW);
 
 	timer_core_timer_enable();

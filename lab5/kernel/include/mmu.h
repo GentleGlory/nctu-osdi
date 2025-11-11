@@ -103,6 +103,8 @@ typedef uint64_t pte_t;
 void mmu_create_pgd_mapping(pgd_t *pgdir, uint64_t phys,
 		uint64_t virt, uint64_t size, uint64_t prot);
 
+int mmu_copy_pgd(pgd_t *pgdir_dest, pgd_t *pgdir_src);
+
 void mmu_walk_page_table(pgd_t *pgdir, uint64_t virt);
 
 int mmu_copy_to_user(pgd_t *pgdir, uint64_t user_dst,

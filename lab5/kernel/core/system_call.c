@@ -91,6 +91,11 @@ static int system_call_get_task_id_handler()
 	return task_get_cur_task_id();
 }
 
+static uint64_t system_call_remain_page_num_handler()
+{
+	return page_remain_page_num();
+}
+
 void system_call_exc_handler(struct pt_regs *pt_regs)
 {
 	uint64_t syscall_num = pt_regs->regs[8];
@@ -138,6 +143,9 @@ void system_call_exc_handler(struct pt_regs *pt_regs)
 		break;
 		case SYS_CALL_GET_TASK_ID:
 			pt_regs->regs[0] = (uint64_t)system_call_get_task_id_handler();
+		break;
+		case SYS_CALL_GET_REMAIN_PAGE_NUM:
+			pt_regs->regs[0] = (uint64_t)system_call_remain_page_num_handler();
 		break;
 		default:
 			printf("\rUnhandled system call num:%lld\n", syscall_num);

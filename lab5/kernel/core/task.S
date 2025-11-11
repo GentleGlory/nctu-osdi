@@ -9,7 +9,7 @@ task_do_fork:
 	mov x1, sp
 	adrp x2, child_return
 	add x2, x2, #:lo12:child_return
-
+	
 	bl task_prepare_fork
 
 child_return:
