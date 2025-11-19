@@ -59,9 +59,9 @@ void main(void)
 	scheduler_init();
 	context_init();
 
-	for(int i = 0; i < 3; ++i) { // N should > 2
-		task_privilege_task_create(foo_1, PRIORITY_NORMAL);
-	}
+	//for(int i = 0; i < 3; ++i) { // N should > 2
+	//	task_privilege_task_create(foo_1, PRIORITY_NORMAL);
+	//}
 	task_privilege_task_create(run_shell, PRIORITY_LOW);
 	task_privilege_task_create(run_test_command1, PRIORITY_LOW);
 	task_privilege_task_create(run_test_command2, PRIORITY_LOW);

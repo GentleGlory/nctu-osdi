@@ -26,7 +26,7 @@ void task_init()
 	
 	// Initialize idle task
 	task_pool = (struct task *)kmalloc_alloc(sizeof(struct task) * TASK_POOL_SIZE);
-	idle_task = task_pool;
+	idle_task = &task_pool[0];
 
 	idle_task->task_id = 0;
 	idle_task->state = RUNNING;
@@ -223,7 +223,6 @@ void task_prepare_fork(struct pt_regs *src_pt_regs, uint64_t sp_address,
 	struct pt_regs *dest_pt_regs = NULL;
 	int64_t offset = 0;
 	unsigned char *kernel_reserved_sp = &__kernel_stack_start;
-	struct page *pgd_page = NULL;
 	pgd_t *pgd_dest = NULL, *pgd_src = NULL;
 	
 	irq_state = lock_irq_save();
@@ -274,7 +273,7 @@ void task_prepare_fork(struct pt_regs *src_pt_regs, uint64_t sp_address,
 	//copy pgd
 	if (src->user_pgd_page != NULL) {
 		pgd_dest = kmalloc_alloc(PAGE_SIZE);
-		if (pgd_page == NULL) {
+		if (pgd_dest == NULL) {
 			goto Failed;
 		}
 
