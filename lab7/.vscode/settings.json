@@ -1,0 +1,31 @@
+{
+    "files.associations": {
+        "*.c": "c",
+        "list": "c",
+        "system_call.h": "c",
+        "ratio": "c",
+        "array": "c",
+        "deque": "c",
+        "string": "c",
+        "unordered_map": "c",
+        "vector": "c",
+        "string_view": "c",
+        "initializer_list": "c",
+        "valarray": "c",
+        "core.h": "c",
+        "timer.h": "c",
+        "mmu.h": "c",
+        "string.h": "c",
+        "exception.h": "c",
+        "task.h": "c",
+        "buddy_system.h": "c",
+        "buddy_sys.h": "c",
+        "typeinfo": "c",
+        "lock.h": "c",
+        "type.h": "c",
+        "kmalloc.h": "c",
+        "random": "c",
+        "utility": "c",
+        "functional": "c"
+    }
+}

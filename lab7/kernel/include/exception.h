@@ -1,0 +1,48 @@
+#ifndef _EXCEPTION_H
+#define _EXCEPTION_H
+
+#include "core.h"
+
+#define CURRENT_EL		1
+#define LOWER_EL		0
+
+#define SYNC_INVALID_CURRENT_ELt		0
+#define IRQ_INVALID_CURRENT_ELt			1
+#define FIQ_INVALID_CURRENT_ELt			2
+#define ERROR_INVALID_CURRENT_ELt		3
+
+#define SYNC_INVALID_CURRENT_ELh		4
+#define IRQ_INVALID_CURRENT_ELh			5
+#define FIQ_INVALID_CURRENT_ELh			6
+#define ERROR_INVALID_CURRENT_ELh		7
+
+#define SYNC_INVALID_LOWER_EL_64		8
+#define IRQ_INVALID_LOWER_EL_64			9
+#define FIQ_INVALID_LOWER_EL_64			10
+#define ERROR_INVALID_LOWER_EL_64		11
+
+#define SYNC_INVALID_LOWER_EL_32		12
+#define IRQ_INVALID_LOWER_EL_32			13
+#define FIQ_INVALID_LOWER_EL_32			14
+#define ERROR_INVALID_LOWER_EL_32		15
+
+#ifndef __ASM__
+
+#define EXC_ESR_EC_MASK				GENMASK(31, 26)
+#define EXC_ESR_EC(esr)				(((esr) & GENMASK(31, 26)) >> 26)
+#define   EXC_ESR_EC_SVC_ARM64		(0b010101)
+#define   EXC_ESR_EC_DATA_ABORT_LOWER	(0b100100)	// Data Abort from a lower Exception level
+#define   EXC_ESR_EC_DATA_ABORT_SAME	(0b100101)	// Data Abort from the same Exception level
+
+struct pt_regs{
+	uint64_t	regs[31];
+	uint64_t	elr;
+	uint64_t	spsr;
+	uint64_t	sp;
+};
+
+extern void ret_to_user(uint64_t entry_addr);
+
+#endif
+
+#endif
